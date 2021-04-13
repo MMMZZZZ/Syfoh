@@ -116,15 +116,6 @@ def str2sysexDict(s:str):
     return sysex
 
 
-"""ser.port = "COM5"
-ser.baudrate = 115200
-ser.open()
-
-while ser.out_waiting:
-    pass
-sleep(1)
-ser.close()"""
-
 if __name__ == "__main__":
     desc = """Sysex-Tool for Syntherrupter
               Convert human readable commands into MIDI Sysex commands and send them to a serial port. 
