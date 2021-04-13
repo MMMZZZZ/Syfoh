@@ -17,7 +17,7 @@ It can [batch process text files](#batch-process-text-files) with multiple comma
 * [Python 3](https://www.python.org/downloads/)
 * Optional: [pyserial](https://pypi.org/project/pyserial/)
 
-## The Humand Readable Sysex Format
+## The Human Readable Sysex Format
 
 Input commands have the following basic structure:
 ```
