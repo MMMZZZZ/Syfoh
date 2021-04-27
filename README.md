@@ -10,7 +10,7 @@ Input:  Set ontime for coil 1 and mode simple to 100
 Output: F0 00 26 05 01 7F 21 00 01 00 64 00 00 00 00 F7
 ```
 
-It can [batch process text files](#batch-process-text-files) with multiple commands and save the output as text or binary file, or send it directly to a serial port. 
+It can [batch process text files](#batch-processing-text-files) with multiple commands and save the output as text or binary file, or send it directly to a serial port. 
 
 ## Requirements
 
