@@ -4,7 +4,7 @@
         "targetLSB-name": "",
         "targetMSB": {"simple": 1, "ml": 2, "midi-live": 2, "lightsaber": 3, "ls": 3},
         "targetLSB": {},
-        "value": {},
+        "value": {"true":  1, "false":  0, "enabled":  1, "disabled":  0},
         "type": "int"
     },
     "0x021": {

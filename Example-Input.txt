@@ -13,6 +13,6 @@ set midi-pan-reach for coil 5 to 12
 set midi-pan-pos for coil 0 to 1
 set midi-pan-pos for coil 1 to 26
 set midi-pan-pos for coil 2 to 51
-set midi-pan-pos for cöil 3 to 76
+set midi-pan-pos for coil 3 to 76
 set midi-pan-pos for coil 4 to 101
 set midi-pan-pos for coil 5 to 126
