@@ -70,6 +70,7 @@ def str2sysexDict(s:str):
             if len(s) > 10 and s[8] == "and":
                 targets.append({"name": s[9], "val": s[10], "type": "None"})
         for t in targets:
+            t["val"] = t["val"].replace("all", "127")
             if t["name"] == "device":
                 try:
                     sysex["deviceID"] = int(t["val"])
@@ -102,7 +103,7 @@ def str2sysexDict(s:str):
         for i,e in enumerate(sysexVal):
             sysex["value"] += e << (8 * i)
     else:
-        sysexVal.replace(" ", "")
+        sysexVal = sysexVal.replace(" ", "")
         try:
             sysex["value"] = int(sysexVal)
         except:

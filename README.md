@@ -54,6 +54,7 @@ python Syfoh.py -i "set some-command to some-value" -m SER -p COM2
 * The sysex command can either be selected by its short name, long name or parameter number. See [Sysex-Name-Number-Mapping.json](/Sysex-Name-Number-Mapping.json) for the full list of short and long names.
 * For every command, there may be optional or required targets, like the coil that shall be modified. In case the names for those targets are not obvious from the [sysex command documentation](https://github.com/MMMZZZZ/Syntherrupter/blob/dev/Documentation/Wiki/Custom%20MIDI%20Commands.md#system-exclusive-messages-sysex), the full list of names for every command is contained in the [Sysex-Properties-Mapping.json](/Sysex-Properties-Mapping.json) file.
 * Similarly, the target values and the sysex value can be replaced by keywords, like `enabled`/`disabled` instead of `1`/`0`, or `simple`/`midi-live`/... for the `mode` target. Again, all those keywords should be obvious from the documentation of the commands and if not, are contained in the json file linked above.
+* Unless noted otherwise, all values are zero indexed. This means f.ex. that coil numbers run from 0 to 5 (unlike in the Syntherrupter UI) and MIDI Channels run from 0-15. Check the documentation linked above for details about the supported value ranges of every command.
 
 ```
 Command:       Set enable for mode simple to enabled
@@ -69,8 +70,16 @@ For MIDI program/envelope `0x20` on device `0`, set the amplitude of step 1 to 1
 set Envelope-Amplitude for device 0 and program 0x20 and step 1 to 1750
 ```
 
+* Broadcasting/wildcards not only work for the device but for all targets. You can broadcast by explicitly writing the broadcast value `127` or `0x7f` or by using the keyword `all`. Not all commands support broadcasting because it doesn't always make sense. 
+
+```
+Command:       set ontime for mode simple and coil all to 42
+Equal variant: set ontime for mode simple and coil 127 to 42
+```
+
 * For string commands, the first 4 characters behind the `to ` (including the first space behind `to`!) are taken as string. This part obviously is case sensitive and can contain additional spaces.
 * Remember, because of the limited sysex size, every sysex command can only carry up to 4 characters. Strings longer than 4 characters are split into "char-groups".
+* char-group 0 will cause the target device to delete the entire string (overwrite with `\x00`). Hence no additional `\x00` character is needed at the end.
 
 Set the name of user 0 (admin) to `Hello, World!`:
 ```
@@ -85,18 +94,8 @@ set user-name for user 0 and char-group 3 to !
 Syfoh can not only accept a single command from the command line but also a text file with any amount of commands, one per line. Here's and example of how such a file could look (Included in this repository as [Example-Input.txt](/Example-Input.txt). It enables stereo for all 6 coils, sets reach mode to const and distributes them equally across the stereo range. 
 
 ```
-set pan-config for coil 0 to constant
-set pan-config for coil 1 to constant
-set pan-config for coil 2 to constant
-set pan-config for coil 3 to constant
-set pan-config for coil 4 to constant
-set pan-config for coil 5 to constant
-set pan-reach for coil 0 to 12
-set pan-reach for coil 1 to 12
-set pan-reach for coil 2 to 12
-set pan-reach for coil 3 to 12
-set pan-reach for coil 4 to 12
-set pan-reach for coil 5 to 12
+set pan-config for coil all to constant
+set pan-reach for coil all to 12
 set pan-pos for coil 0 to 1
 set pan-pos for coil 1 to 26
 set pan-pos for coil 2 to 51

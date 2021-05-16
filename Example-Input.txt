@@ -1,15 +1,5 @@
-set midi-pan-cfg for coil 0 to constant
-set midi-pan-cfg for coil 1 to constant
-set midi-pan-cfg for coil 2 to constant
-set midi-pan-cfg for coil 3 to constant
-set midi-pan-cfg for coil 4 to constant
-set midi-pan-cfg for coil 5 to constant
-set midi-pan-reach for coil 0 to 12
-set midi-pan-reach for coil 1 to 12
-set midi-pan-reach for coil 2 to 12
-set midi-pan-reach for coil 3 to 12
-set midi-pan-reach for coil 4 to 12
-set midi-pan-reach for coil 5 to 12
+set midi-pan-cfg for coil all to constant
+set midi-pan-reach for coil all to 12
 set midi-pan-pos for coil 0 to 1
 set midi-pan-pos for coil 1 to 26
 set midi-pan-pos for coil 2 to 51
