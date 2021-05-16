@@ -94,12 +94,12 @@ set user-name for user 0 and char-group 3 to !
 Syfoh can not only accept a single command from the command line but also a text file with any amount of commands, one per line. Here's and example of how such a file could look (Included in this repository as [Example-Input.txt](/Example-Input.txt). It enables stereo for all 6 coils, sets reach mode to const and distributes them equally across the stereo range. 
 
 ```
-set pan-config for coil all to constant
-set pan-reach for coil all to 12
-set pan-pos for coil 0 to 1
-set pan-pos for coil 1 to 26
-set pan-pos for coil 2 to 51
-set pan-pos for coil 3 to 76
-set pan-pos for coil 4 to 101
-set pan-pos for coil 5 to 126
+set midi-pan-cfg for coil all to constant
+set midi-pan-reach for coil all to 12
+set midi-pan-pos for coil 0 to 1
+set midi-pan-pos for coil 1 to 26
+set midi-pan-pos for coil 2 to 51
+set midi-pan-pos for coil 3 to 76
+set midi-pan-pos for coil 4 to 101
+set midi-pan-pos for coil 5 to 126
 ```
