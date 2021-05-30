@@ -1,6 +1,7 @@
 import string
 import json
 import argparse
+import struct
 from pathlib import Path
 try:
     import serial
@@ -12,7 +13,7 @@ def sysexBytes(number, targetMSB, targetLSB, value, deviceID=127, protocolVer=1,
     start = bytes([0xf0, 0x00, 0x26, 0x05, protocolVer, deviceID])
     for i in range(2):
         start += bytes([number & 0x7f])
-        number >>= 7
+        number >>= 8
     start += bytes([targetLSB, targetMSB])
     for i in range(5):
         start += bytes([value & 0x7f])
@@ -110,10 +111,17 @@ def str2sysexDict(s:str):
             try:
                 sysex["value"] = int(sysexVal, 16)
             except:
-                if sysexVal in mapping[num]["value"]:
-                    sysex["value"] = mapping[num]["value"][sysexVal]
-                else:
-                    return -1
+                try:
+                    # Convert float object to 32bit IEEE754 float, then store these bytes in an int
+                    # such that it can be later processed and packed by sysexBytes (packed into 7bit chunks).
+                    sysex["value"] = struct.unpack("<I", struct.pack("<f", float(sysexVal)))[0]
+                    # if it's not a float we're already in th except section and the following won't be executed
+                    sysex["number"] |= 0x2000
+                except:
+                    if sysexVal in mapping[num]["value"]:
+                        sysex["value"] = mapping[num]["value"][sysexVal]
+                    else:
+                        return -1
     return sysex
 
 
