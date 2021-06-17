@@ -272,7 +272,7 @@ if __name__ == "__main__":
                 print(strCmds[i], end="")
                 midi.send_message(e)
             del midi
-            print("Sent {} command(s) to serial port.".format(len(cmds)))
+            print("Sent {} command(s) to MIDI port.".format(len(cmds)))
         else:
             parser.error("To use the MIDI feature you need to install the python-rtmidi package: "
                          "https://pypi.org/project/python-rtmidicd/")
