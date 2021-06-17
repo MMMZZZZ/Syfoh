@@ -8,6 +8,14 @@ try:
     serialAvailable = True
 except:
     serialAvailable = False
+if (serialAvailable):
+    from serial.tools.list_ports import comports
+try:
+    import rtmidi
+    midiAvailable = True
+except:
+    midiAvailable = False
+
 
 def sysexBytes(number, targetMSB, targetLSB, value, deviceID=127, protocolVer=1, **kwargs):
     start = bytes([0xf0, 0x00, 0x26, 0x05, protocolVer, deviceID])
@@ -130,30 +138,58 @@ if __name__ == "__main__":
               Convert human readable commands into MIDI Sysex commands and send them to a serial port. 
               Developped by Max Zuidberg, licensed under MPL-2.0"""
     parser = argparse.ArgumentParser(description=desc)
-    parser.add_argument("-i", "--input", type=str, required=True,
+    parser.add_argument("-i", "--input", type=str, required=False, default="",
                         help="Command as string or path to text file.")
-    parser.add_argument("-m", "--mode", type=str, required=True,
-                        help="Select what output is generated. Can be SER/SERIAL, HEX or BIN. "
-                             "If SERIAL is selected, a port must be specified using -p. "
-                             "If HEX is selected, an output file can be specified. "
-                             "If BIN is selected, an output file must be specified.")
+    parser.add_argument("-m", "--mode", type=str, required=False, default="",
+                        help="Select what output is generated. Can be SER/SERIAL, MID/MIDI, HEX or BIN (case insensitive). "
+                             "For SERIAL and MIDI a port must be specified using -p/--port. "
+                             "For HEX an output file can be specified using -o/--output. "
+                             "For BIN an output file must be specified using -o/--output.")
     parser.add_argument("-o", "--output", required=False, default="",
                         help="Output file for hex or binary data.")
     parser.add_argument("-p", "--port", required=False,
-                        help="Serial port to send commands to. Example (Windows): \"COM3\".")
+                        help="Serial or MIDI port to send commands to. Example (Windows): \"COM3\". If an integer is "
+                             "given, it'll be used as index in the list of available ports (see -l/--list).")
     parser.add_argument("-b", "--baudrate", required=False, type=int, default=115200,
                         help="Select baudrate for serial commands. Default is 115200baud/s.")
+    parser.add_argument("-l", "--list", required=False, action="store_true",
+                        help="List all available serial and MIDI ports.")
 
     args = parser.parse_args()
 
+    serialPorts = []
+    midiPorts = []
     if serialAvailable:
-        ser = serial.Serial()
-        ser.baudrate = args.baudrate
-        ser.port = args.port
+        serialPorts = [p.name for p in comports()]
+    if midiAvailable:
+        midi = rtmidi.MidiOut()
+        midiPorts = midi.get_ports()
+
+    if args.list:
+        if serialAvailable:
+            print("List of available serial ports:")
+            for i, p in enumerate(serialPorts):
+                print("{:3}: \"{}\"".format(i, p))
+        else:
+            print("To list or use serial ports you need to install the pyserial package: "
+                  "https://pypi.org/project/pyserial/")
+        if midiAvailable:
+            print("List of available MIDI ports")
+            for i, p in enumerate(midiPorts):
+                print("{:3}: \"{}\"".format(i, p))
+        else:
+            print("To list or use MIDI ports you need to install the python-rtmidi package: "
+                  "https://pypi.org/project/python-rtmidi/")
+        exit()
+
+    if not args.mode:
+        parser.error("-m/--mode is required.")
+    if not args.input:
+        parser.error("-i/--input is required.")
 
     args.mode = args.mode[:3].upper()
-    if args.mode not in ["SER", "HEX", "BIN"]:
-        parser.error("Invalid mode. Must be SER/SERIAL, HEX or BIN")
+    if args.mode not in ["SER", "HEX", "BIN", "MID"]:
+        parser.error("Invalid mode. Must be SER/SERIAL, MID/MIDI, HEX or BIN")
 
     if args.output:
         out = Path(args.output)
@@ -187,6 +223,22 @@ if __name__ == "__main__":
 
     if args.mode == "SER":
         if serialAvailable:
+            portOk = (args.port in serialPorts)
+            if not portOk:
+                isInt = True
+                try:
+                    args.port = int(args.port)
+                except:
+                    isInt = False
+                if isInt and args.port < len(serialPorts):
+                    portOk = True
+                    args.port = serialPorts[args.port]
+            if not portOk:
+                parser.error("Specified port \"{}\" not among available ports or index too high. "
+                             "{} ports available: {}".format(args.port, len(serialPorts), ", ".join(["\"" + p + "\"" for p in serialPorts])))
+            ser = serial.Serial()
+            ser.baudrate = args.baudrate
+            ser.port = args.port
             ser.open()
             for i,e in enumerate(cmds):
                 print(strCmds[i], end="")
@@ -196,7 +248,34 @@ if __name__ == "__main__":
             ser.close()
             print("Sent {} command(s) to serial port.".format(len(cmds)))
         else:
-            parser.error("To use the serial feature you need to install the pyserial package: https://pypi.org/project/pyserial/")
+            parser.error("To use the serial feature you need to install the pyserial package: "
+                         "https://pypi.org/project/pyserial/")
+
+    elif args.mode == "MID":
+        if midiAvailable:
+            portOk = (args.port in midiPorts)
+            if portOk:
+                args.port = midiPorts.index(args.port)
+            else:
+                isInt = True
+                try:
+                    args.port = int(args.port)
+                except:
+                    isInt = False
+                if isInt and args.port < len(midiPorts):
+                    portOk = True
+            if not portOk:
+                parser.error("Specified port \"{}\" not among available ports or index too high. "
+                             "{} ports available: {}".format(args.port, len(midiPorts), ", ".join(["\"" + p + "\"" for p in midiPorts])))
+            midi.open_port(args.port)
+            for i,e in enumerate(cmds):
+                print(strCmds[i], end="")
+                midi.send_message(e)
+            del midi
+            print("Sent {} command(s) to serial port.".format(len(cmds)))
+        else:
+            parser.error("To use the MIDI feature you need to install the python-rtmidi package: "
+                         "https://pypi.org/project/python-rtmidicd/")
 
     elif args.mode == "HEX":
         for cmd in strCmds:
