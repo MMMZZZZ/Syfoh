@@ -16,6 +16,7 @@ It can [batch process text files](#batch-processing-text-files) with multiple co
 
 * [Python 3](https://www.python.org/downloads/)
 * Optional: [pyserial](https://pypi.org/project/pyserial/)
+* Optional: [python-rtmidi](https://pypi.org/project/python-rtmidi/)
 
 ## The Human Readable Sysex Format
 
@@ -32,7 +33,7 @@ A complete description of the command line options can be obtained with
 python Syfoh.py -h
 ```
 
-Process a text file and save it as `.syx` (binary) file. This file can be directly sent to a serial port using tools like Realterm.
+Process a text file and save it as `.syx` (binary) file. This file can be directly sent to a serial port using tools like Realterm. This file can also be processed by any generic Sysex tools (f.ex. converted into a MIDI file). Vendor-specific tools likely won't work. 
 ```
 python Syfoh.py -i "Example-Input.txt" -m BIN -o "Sysex-binary.syx"
 ```
@@ -46,6 +47,7 @@ Process a single command and let Syfoh sent it directly to serial port 2 (with t
 ```
 python Syfoh.py -i "set some-command to some-value" -m SER -p COM2
 ```
+Sending data to a MIDI port works exactly the same but with `-m MID`. Note that you can get a list of ports using the `-l` parameter. On top of that you can use the index of the resulting list instead of the port name. Again, please check out the `-h/--help` for details. 
 
 ### Examples and Explanations
 
@@ -70,7 +72,7 @@ For MIDI program/envelope `0x20` on device `0`, set the amplitude of step 1 to 1
 set Envelope-Amplitude for device 0 and program 0x20 and step 1 to 1750
 ```
 
-* Broadcasting/wildcards not only work for the device but for all targets. You can broadcast by explicitly writing the broadcast value `127` or `0x7f` or by using the keyword `all`. Not all commands support broadcasting because it doesn't always make sense. 
+* Broadcasting/wildcards not only work for the device but for all targets, too. You can broadcast by explicitly writing the broadcast value `127` or `0x7f` or by using the keyword `all`. Not all commands support broadcasting because it doesn't always make sense. 
 
 ```
 Command:       set ontime for mode simple and coil all to 42
@@ -91,7 +93,9 @@ set user-name for user 0 and char-group 3 to !
 
 ## Batch Processing Text Files
 
-Syfoh can not only accept a single command from the command line but also a text file with any amount of commands, one per line. Here's and example of how such a file could look (Included in this repository as [Example-Input.txt](/Example-Input.txt). It enables stereo for all 6 coils, sets reach mode to const and distributes them equally across the stereo range. 
+Syfoh can not only accept a single command from the command line but also a text file with any amount of commands, one per line. Here's and example of how such a file could look (Included in this repository as [Example-Input.txt](/Example-Input.txt)). It enables stereo for all 6 coils, sets reach mode to constant and distributes them equally across the stereo range. 
+
+Any line that doesn't mach the format will be ignored. So you can use C style comments, Python style, whatever. You probably could write plain text and it would be properly ignored. Only thing you can't do is write a comment in the same line as a command. 
 
 ```
 set midi-pan-cfg for coil all to constant
