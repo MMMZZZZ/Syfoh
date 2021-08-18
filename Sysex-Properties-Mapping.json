@@ -111,9 +111,33 @@
         "value": {},
         "type": "int"
     },
-    "0x065": {
+    "0x066": {
         "targetMSB-name": "mode",
         "targetLSB-name": "coil",
+        "targetMSB": {"simple": 1, "ml": 2, "midi-live": 2, "lightsaber": 3, "ls": 3},
+        "targetLSB": {},
+        "value": {"all":  65535},
+        "type": "int"
+    },
+    "0x067": {
+        "targetMSB-name": "mode",
+        "targetLSB-name": "",
+        "targetMSB": {"simple": 1, "ml": 2, "midi-live": 2, "lightsaber": 3, "ls": 3},
+        "targetLSB": {},
+        "value": {},
+        "type": "int"
+    },
+    "0x068": {
+        "targetMSB-name": "mode",
+        "targetLSB-name": "",
+        "targetMSB": {"simple": 1, "ml": 2, "midi-live": 2, "lightsaber": 3, "ls": 3},
+        "targetLSB": {},
+        "value": {},
+        "type": "int"
+    },
+    "0x069": {
+        "targetMSB-name": "mode",
+        "targetLSB-name": "",
         "targetMSB": {"simple": 1, "ml": 2, "midi-live": 2, "lightsaber": 3, "ls": 3},
         "targetLSB": {},
         "value": {},
@@ -141,6 +165,14 @@
         "targetMSB": {},
         "targetLSB": {},
         "value": {"manual": 0, "force": 1, "auto": 2},
+        "type": "int"
+    },
+    "0x202": {
+        "targetMSB-name": "",
+        "targetLSB-name": "",
+        "targetMSB": {},
+        "targetLSB": {},
+        "value": {"key": 41153700, "reset-key": 41153700},
         "type": "int"
     },
     "0x220": {
@@ -189,6 +221,14 @@
         "targetMSB": {},
         "targetLSB": {},
         "value": {"manual": 0, "manually": 0, "release": 1, "on-release": 1, "immediate": 2, "immediately": 2},
+        "type": "int"
+    },
+    "0x226": {
+        "targetMSB-name": "",
+        "targetLSB-name": "",
+        "targetMSB": {},
+        "targetLSB": {},
+        "value": {"manual": 0, "force": 1, "auto": 2},
         "type": "int"
     },
     "0x240": {
@@ -266,6 +306,14 @@
     "0x264": {
         "targetMSB-name": "",
         "targetLSB-name": "coil",
+        "targetMSB": {},
+        "targetLSB": {},
+        "value": {},
+        "type": "int"
+    },
+    "0x266": {
+        "targetMSB-name": "",
+        "targetLSB-name": "",
         "targetMSB": {},
         "targetLSB": {},
         "value": {},
