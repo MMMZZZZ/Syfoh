@@ -97,7 +97,13 @@ Syfoh can not only accept a single command from the command line but also a text
 
 Any line that doesn't mach the format will be ignored. So you can use C style comments, Python style, whatever. You probably could write plain text and it would be properly ignored. Only thing you can't do is write a comment in the same line as a command. 
 
+**Important** if you're using batch processing you should [disable UI Updates (Sysex command `0x226`)](https://github.com/MMMZZZZ/Syntherrupter/blob/dev/Documentation/Wiki/Custom%20MIDI%20Commands.md#0x220-0x23f-ui-settings), otherwise Syntherrupter might not be able to process the commands fast enough. With UI Updates disabled there are no issues (processing time <<10ms; commands send with 40ms delay). 
+
 ```
+# Disable UI updates to ensure fast processing
+set ui-update to disabled
+
+# Configure stereo mode, range and position for all six coils
 set midi-pan-cfg for coil all to constant
 set midi-pan-reach for coil all to 12
 set midi-pan-pos for coil 0 to 1

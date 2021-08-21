@@ -3,6 +3,7 @@ import json
 import argparse
 import struct
 from pathlib import Path
+from time import sleep
 try:
     import serial
     serialAvailable = True
@@ -257,6 +258,8 @@ if __name__ == "__main__":
                 ser.write(e)
                 while ser.out_waiting:
                     pass
+                # Let Syntherrupter process the data
+                sleep(0.04)
             ser.close()
             print("Sent {} command(s) to serial port.".format(len(cmds)))
         else:
@@ -283,6 +286,8 @@ if __name__ == "__main__":
             for i,e in enumerate(cmds):
                 print(strCmds[i], end="")
                 midi.send_message(e)
+                # Let Syntherrupter process the data
+                sleep(0.04)
             del midi
             print("Sent {} command(s) to MIDI port.".format(len(cmds)))
         else:
