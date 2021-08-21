@@ -52,7 +52,7 @@ Sending data to a MIDI port works exactly the same but with `-m MID`. Note that 
 ### Examples and Explanations
 
 * The structure is case insensitive. 
-* Both hex (`0x...`) and decimal notation is valid for any integer
+* hex (`0x...`), binary (`0b...`) and decimal notation are valid for any integer
 * The sysex command can either be selected by its short name, long name or parameter number. See [Sysex-Name-Number-Mapping.json](/Sysex-Name-Number-Mapping.json) for the full list of short and long names.
 * For every command, there may be optional or required targets, like the coil that shall be modified. In case the names for those targets are not obvious from the [sysex command documentation](https://github.com/MMMZZZZ/Syntherrupter/blob/dev/Documentation/Wiki/Custom%20MIDI%20Commands.md#system-exclusive-messages-sysex), the full list of names for every command is contained in the [Sysex-Properties-Mapping.json](/Sysex-Properties-Mapping.json) file.
 * Similarly, the target values and the sysex value can be replaced by keywords, like `enabled`/`disabled` instead of `1`/`0`, or `simple`/`midi-live`/... for the `mode` target. Again, all those keywords should be obvious from the documentation of the commands and if not, are contained in the json file linked above.

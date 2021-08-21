@@ -64,12 +64,15 @@ def str2sysexDict(s:str):
         num = int(num)
     except:
         try:
-            num = int(num, 16)
+            num = int(num, 2)
         except:
-            if num in names2num:
-                num = names2num[num]
-            else:
-                return -1
+            try:
+                num = int(num, 16)
+            except:
+                if num in names2num:
+                    num = names2num[num]
+                else:
+                    return -1
     sysex["number"] = num
     targets = []
     if len(s) > 4 and s[2] in ("of", "for"):
@@ -85,9 +88,12 @@ def str2sysexDict(s:str):
                     sysex["deviceID"] = int(t["val"])
                 except:
                     try:
-                        sysex["deviceID"] = int(t["val"], 16)
+                        sysex["deviceID"] = int(t["val"], 2)
                     except:
-                        return -1
+                        try:
+                            sysex["deviceID"] = int(t["val"], 16)
+                        except:
+                            return -1
                 continue
             elif t["name"] == mapping[num]["targetMSB-name"]:
                 t["type"] = "targetMSB"
@@ -99,12 +105,15 @@ def str2sysexDict(s:str):
                 t["val"] = int(t["val"])
             except:
                 try:
-                    t["val"] = int(t["val"], 16)
+                    t["val"] = int(t["val"], 2)
                 except:
-                    if t["val"] in mapping[num][t["type"]]:
-                        t["val"] = mapping[num][t["type"]][t["val"]]
-                    else:
-                        return -1
+                    try:
+                        t["val"] = int(t["val"], 16)
+                    except:
+                        if t["val"] in mapping[num][t["type"]]:
+                            t["val"] = mapping[num][t["type"]][t["val"]]
+                        else:
+                            return -1
             sysex[t["type"]] = t["val"]
     if mapping[num]["type"] == "str":
         sysexVal = sysexVal[:4].encode("iso-8859-1")
@@ -117,19 +126,22 @@ def str2sysexDict(s:str):
             sysex["value"] = int(sysexVal)
         except:
             try:
-                sysex["value"] = int(sysexVal, 16)
+                sysex["value"] = int(sysexVal, 2)
             except:
                 try:
-                    # Convert float object to 32bit IEEE754 float, then store these bytes in an int
-                    # such that it can be later processed and packed by sysexBytes (packed into 7bit chunks).
-                    sysex["value"] = struct.unpack("<I", struct.pack("<f", float(sysexVal)))[0]
-                    # if it's not a float we're already in th except section and the following won't be executed
-                    sysex["number"] |= 0x2000
+                    sysex["value"] = int(sysexVal, 16)
                 except:
-                    if sysexVal in mapping[num]["value"]:
-                        sysex["value"] = mapping[num]["value"][sysexVal]
-                    else:
-                        return -1
+                    try:
+                        # Convert float object to 32bit IEEE754 float, then store these bytes in an int
+                        # such that it can be later processed and packed by sysexBytes (packed into 7bit chunks).
+                        sysex["value"] = struct.unpack("<I", struct.pack("<f", float(sysexVal)))[0]
+                        # if it's not a float we're already in th except section and the following won't be executed
+                        sysex["number"] |= 0x2000
+                    except:
+                        if sysexVal in mapping[num]["value"]:
+                            sysex["value"] = mapping[num]["value"][sysexVal]
+                        else:
+                            return -1
     return sysex
 
 
