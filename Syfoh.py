@@ -220,7 +220,7 @@ if __name__ == "__main__":
     cmds = []
     if p.is_file():
         with open(p) as f:
-            cmds = [cmd[:-1] for cmd in f.readlines()]
+            cmds = [cmd.rstrip("\n") for cmd in f.readlines()]
     else:
         cmds.append(args.input)
 
