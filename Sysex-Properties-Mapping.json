@@ -167,6 +167,14 @@
         "value": {"manual": 0, "force": 1, "auto": 2},
         "type": "int"
     },
+    "0x201": {
+        "targetMSB-name": "",
+        "targetLSB-name": "",
+        "targetMSB": {},
+        "targetLSB": {},
+        "value": {},
+        "type": "int"
+    },
     "0x202": {
         "targetMSB-name": "",
         "targetLSB-name": "",
