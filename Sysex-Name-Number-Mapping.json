@@ -59,7 +59,7 @@
     "pan-reach":                 "0x064",
     "reset-channel-nrps":        "0x066",
     "assigned-lightsabers":      "0x100",
-    "set-lightsaber-id":         "0x101",
+    "lightsaber-id":             "0x101",
     "eeprom-update-mode":        "0x200",
     "reset":                     "0x202",
     "display-brightness":        "0x220",
