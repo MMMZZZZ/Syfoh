@@ -18,18 +18,6 @@ except:
     midiAvailable = False
 
 
-def sysexBytes(number, targetMSB, targetLSB, value, deviceID=127, protocolVer=1, **kwargs):
-    start = bytes([0xf0, 0x00, 0x26, 0x05, protocolVer, deviceID])
-    for i in range(2):
-        start += bytes([number & 0x7f])
-        number >>= 8
-    start += bytes([targetLSB, targetMSB])
-    for i in range(5):
-        start += bytes([value & 0x7f])
-        value >>= 7
-    start += bytes([0xf7])
-    return start
-
 with open("Sysex-Name-Number-Mapping.json") as f:
     names2num = json.load(f)
 for k,v in names2num.items():
@@ -74,6 +62,18 @@ def str2sysexDict(s:str):
                     num = names2num[num]
                 else:
                     return -1
+def sysexBytes(number, targetMSB, targetLSB, value, deviceID=127, protocolVer=1, **kwargs):
+    start = bytes([0xf0, 0x00, 0x26, 0x05, protocolVer, deviceID])
+    for i in range(2):
+        start += bytes([number & 0x7f])
+        number >>= 8
+    start += bytes([targetLSB, targetMSB])
+    for i in range(5):
+        start += bytes([value & 0x7f])
+        value >>= 7
+    start += bytes([0xf7])
+    return start
+
     sysex["number"] = num
     targets = []
     if len(s) > 4 and s[2] in ("of", "for"):
