@@ -37,31 +37,19 @@ for k, v in m.items():
             k = int(k)
     mapping[k] = v
 
-def str2sysexDict(s:str):
-    sysex = {"number": 0, "targetMSB": 0, "targetLSB": 0, "value": 0, "deviceID": 127}
-    s = s.split(" ")
-    sl = [strng.lower() for strng in s]
-    if "to" not in sl:
-        return -1
-    valStart = sl.index("to")
-    sysexVal = " ".join(s[valStart + 1:])
-    s = [strng for strng in sl[:valStart] if string]
-    if s[0] != "set":
-        return -1
-    num = s[1]
+def findInt(num:str):
     try:
-        num = int(num)
+        n = int(num)
     except:
         try:
-            num = int(num, 2)
+            n = int(num, 2)
         except:
             try:
-                num = int(num, 16)
+                n = int(num, 16)
             except:
-                if num in names2num:
-                    num = names2num[num]
-                else:
-                    return -1
+                return None
+    return n
+
 def sysexBytes(number, targetMSB, targetLSB, value, deviceID=127, protocolVer=1, **kwargs):
     start = bytes([0xf0, 0x00, 0x26, 0x05, protocolVer, deviceID])
     for i in range(2):
@@ -74,6 +62,32 @@ def sysexBytes(number, targetMSB, targetLSB, value, deviceID=127, protocolVer=1,
     start += bytes([0xf7])
     return start
 
+def str2sysexDict(s:str):
+    sysex = {"number": 0, "targetMSB": 0, "targetLSB": 0, "value": 0, "deviceID": 127}
+    readCommands = {"check": 0x02, "read": 0x03, "get": 0x04}
+    s = s.split(" ")
+    sl = [strng.lower() for strng in s]
+    readOnly = False
+    valStart = len(sl)
+    if "to" not in sl:
+        readOnly = True
+    else:
+        valStart = sl.index("to")
+        sysexVal = " ".join(s[valStart + 1:])
+    s = [strng for strng in sl[:valStart] if strng]
+    if readOnly:
+        if s[0] in readCommands:
+            readOnly = readCommands[s[0]]
+        else:
+            return -1
+    elif s[0] != "set":
+        return -1
+    num = findInt(s[1])
+    if num is None:
+        if s[1] in names2num:
+            num = names2num[s[1]]
+        else:
+            return -1
     sysex["number"] = num
     targets = []
     if len(s) > 4 and s[2] in ("of", "for"):
@@ -85,16 +99,10 @@ def sysexBytes(number, targetMSB, targetLSB, value, deviceID=127, protocolVer=1,
         for t in targets:
             t["val"] = t["val"].replace("all", "127")
             if t["name"] == "device":
-                try:
-                    sysex["deviceID"] = int(t["val"])
-                except:
-                    try:
-                        sysex["deviceID"] = int(t["val"], 2)
-                    except:
-                        try:
-                            sysex["deviceID"] = int(t["val"], 16)
-                        except:
-                            return -1
+                n = findInt(s[1])
+                if n is None:
+                    return -1
+                sysex["deviceID"] = n
                 continue
             elif t["name"] == mapping[num]["targetMSB-name"]:
                 t["type"] = "targetMSB"
@@ -102,47 +110,42 @@ def sysexBytes(number, targetMSB, targetLSB, value, deviceID=127, protocolVer=1,
                 t["type"] = "targetLSB"
             else:
                 return -1
-            try:
-                t["val"] = int(t["val"])
-            except:
-                try:
-                    t["val"] = int(t["val"], 2)
-                except:
-                    try:
-                        t["val"] = int(t["val"], 16)
-                    except:
-                        if t["val"] in mapping[num][t["type"]]:
-                            t["val"] = mapping[num][t["type"]][t["val"]]
-                        else:
-                            return -1
+            n = findInt(t["val"])
+            if n is None:
+                if t["val"] in mapping[num][t["type"]]:
+                    n = mapping[num][t["type"]][t["val"]]
+                else:
+                    return -1
+            t["val"] = n
             sysex[t["type"]] = t["val"]
-    if mapping[num]["type"] == "str":
-        sysexVal = sysexVal[:4].encode("iso-8859-1")
-        sysex["value"] = 0
-        for i,e in enumerate(sysexVal):
-            sysex["value"] += e << (8 * i)
+
+    if readOnly:
+        # When reading, what has been processed above as sysex number actually
+        # belongs to the value (while the number indicates the type of read command).
+        sysex["value"] = sysex["number"]
+        sysex["number"] = readOnly
     else:
-        sysexVal = sysexVal.replace(" ", "")
-        try:
-            sysex["value"] = int(sysexVal)
-        except:
-            try:
-                sysex["value"] = int(sysexVal, 2)
-            except:
+        if mapping[num]["type"] == "str":
+            sysexVal = sysexVal[:4].encode("iso-8859-1")
+            sysex["value"] = 0
+            for i,e in enumerate(sysexVal):
+                sysex["value"] += e << (8 * i)
+        else:
+            sysexVal = sysexVal.replace(" ", "")
+            n = findInt(sysexVal)
+            if n is None:
                 try:
-                    sysex["value"] = int(sysexVal, 16)
+                    # Convert float object to 32bit IEEE754 float, then store these bytes in an int
+                    # such that it can be later processed and packed by sysexBytes (packed into 7bit chunks).
+                    n = struct.unpack("<I", struct.pack("<f", float(sysexVal)))[0]
+                    # if it's not a float we're already in th except section and the following won't be executed
+                    sysex["number"] |= 0x2000
                 except:
-                    try:
-                        # Convert float object to 32bit IEEE754 float, then store these bytes in an int
-                        # such that it can be later processed and packed by sysexBytes (packed into 7bit chunks).
-                        sysex["value"] = struct.unpack("<I", struct.pack("<f", float(sysexVal)))[0]
-                        # if it's not a float we're already in th except section and the following won't be executed
-                        sysex["number"] |= 0x2000
-                    except:
-                        if sysexVal in mapping[num]["value"]:
-                            sysex["value"] = mapping[num]["value"][sysexVal]
-                        else:
-                            return -1
+                    if sysexVal in mapping[num]["value"]:
+                        n = mapping[num]["value"][sysexVal]
+                    else:
+                        return -1
+            sysex["value"] = n
     return sysex
 
 
