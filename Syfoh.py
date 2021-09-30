@@ -149,6 +149,8 @@ def str2sysexDict(s:str):
             sysex["value"] = n
     return sysex
 
+def hexStr(b:bytes):
+    return " ".join(["{:02x}".format(c) for c in b])
 
 if __name__ == "__main__":
     desc = """Sysex-Tool for Syntherrupter
@@ -235,8 +237,7 @@ if __name__ == "__main__":
             print("Ignored invald command: {}".format(e))
         else:
             cmds[i] = sysexBytes(**cmds[i])
-            strCmds.append(" ".join(["{:02x}".format(c) for c in cmds[i]]) + "\n")
-    cmds = [c for c in cmds if c != -1]
+            strCmds.append(hexStr(cmds[i]))
 
     if args.mode == "SER":
         if serialAvailable:
@@ -258,7 +259,7 @@ if __name__ == "__main__":
             ser.port = args.port
             ser.open()
             for i,e in enumerate(cmds):
-                print(strCmds[i], end="")
+                print(strCmds[i])
                 ser.write(e)
                 while ser.out_waiting:
                     pass
@@ -288,7 +289,7 @@ if __name__ == "__main__":
                              "{} ports available: {}".format(args.port, len(midiPorts), ", ".join(["\"" + p + "\"" for p in midiPorts])))
             midi.open_port(args.port)
             for i,e in enumerate(cmds):
-                print(strCmds[i], end="")
+                print(strCmds[i])
                 midi.send_message(e)
                 # Let Syntherrupter process the data
                 sleep(0.04)
@@ -300,7 +301,7 @@ if __name__ == "__main__":
 
     elif args.mode == "HEX":
         for cmd in strCmds:
-            print(cmd, end="")
+            print(cmd)
         if (out):
             with open(out, "w") as f:
                 f.writelines(strCmds)
