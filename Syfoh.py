@@ -64,7 +64,7 @@ def sysexBytes(number, targetMSB, targetLSB, value, deviceID=127, protocolVer=1,
     return start
 
 def str2sysexDict(s:str):
-    sysex = {"number": 0, "targetMSB": 0, "targetLSB": 0, "value": 0, "deviceID": 127}
+    sysex = {"number": 0, "targetMSB": 0, "targetLSB": 0, "value": 0, "deviceID": 127, "reading": False}
     readCommands = {"check": 0x02, "read": 0x03, "get": 0x04}
     s = s.split(" ")
     sl = [strng.lower() for strng in s]
@@ -79,6 +79,7 @@ def str2sysexDict(s:str):
     if readOnly:
         if s[0] in readCommands:
             readOnly = readCommands[s[0]]
+            sysex["reading"] = True
         else:
             return -1
     elif s[0] != "set":
@@ -231,11 +232,13 @@ if __name__ == "__main__":
         cmds.append(args.input)
 
     strCmds = []
+    reading = []
     for i,e in enumerate(cmds):
         cmds[i] = str2sysexDict(e)
         if cmds[i] == -1:
             print("Ignored invald command: {}".format(e))
         else:
+            reading[i] = cmds[i]["reading"]
             cmds[i] = sysexBytes(**cmds[i])
             strCmds.append(hexStr(cmds[i]))
 
