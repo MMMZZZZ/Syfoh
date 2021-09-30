@@ -18,7 +18,8 @@ except:
     midiAvailable = False
 
 
-with open("Sysex-Name-Number-Mapping.json") as f:
+scriptDir = Path(__file__).parent
+with open(scriptDir / "Sysex-Name-Number-Mapping.json") as f:
     names2num = json.load(f)
 for k,v in names2num.items():
     if type(v) == str:
@@ -26,7 +27,7 @@ for k,v in names2num.items():
             names2num[k] = int(v, 16)
         else:
             names2num[k] = int(v)
-with open("Sysex-Properties-Mapping.json") as f:
+with open(scriptDir / "Sysex-Properties-Mapping.json") as f:
     m = json.load(f)
 mapping = dict()
 for k, v in m.items():
