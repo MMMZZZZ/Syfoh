@@ -51,6 +51,108 @@ def findInt(num:str):
                 return None
     return n
 
+def bytes2sysexDict(b:bytes):
+    sysex = {"number": 0, "targetMSB": 0, "targetLSB": 0, "value": 0, "deviceID": 0, "protocolVer": 0, "valid": False}
+    if len(b) != 16 or b[0] != 0xf0 or b[-1] != 0xf7:
+        sysex["valid"] = False
+    else:
+        sysex["protocolVer"] = b[4]
+        sysex["deviceID"]    = b[5]
+        sysex["number"]      = (b[7] << 8) + b[6]
+        sysex["targetLSB"]   = b[8]
+        sysex["targetMSB"]   = b[9]
+        for i in range(5):
+            sysex["value"]  += b[10 + i] << (7 * i)
+        sysex["valid"] = True
+    return sysex
+
+def invertDict(d:dict):
+    revDict = dict()
+    for k,v in d.items():
+        # Only use first occurences
+        if v not in revDict:
+            revDict[v] = k
+    return revDict
+
+def sysexDict2str(d:dict):
+    readCommands = {v:k for k,v in {"check": 0x02, "read": 0x03, "get": 0x04}.items()}
+    reply = {0x01: "input"}
+    targets = {127: "all"}
+    targets.update({k:str(k) for k in range(127)})
+    targetPrefix = "for"
+    cmdNames = invertDict(names2num)
+    s = []
+    cmdType = "normal"
+    cmdNum = d["number"]
+    if cmdNum in readCommands:
+        cmdType = "read"
+        s.append(readCommands[cmdNum])
+        cmdNum = d["value"]
+        targetPrefix = "of"
+    elif cmdNum in reply:
+        cmdType = "reply"
+        s.append(reply[cmdNum])
+        targetPrefix = "from"
+    else:
+        s.append("set")
+        targetPrefix = "for"
+
+    isFloat = False
+    if cmdNum & 0x2000:
+        cmdNum &= ~0x2000
+        isFloat = True
+
+    if cmdType != "reply":
+        if cmdNum in cmdNames:
+            s.append(cmdNames[cmdNum])
+        else:
+            s.append(str(cmdNum))
+
+    s.append(targetPrefix)
+    s.append("device")
+    s.append(targets[d["deviceID"]])
+    s.append("and")
+    if cmdType != "reply" and cmdNum in mapping:
+        s.append(mapping[cmdNum]["targetMSB-name"])
+        msbDict = invertDict(mapping[cmdNum]["targetMSB"])
+        if d["targetMSB"] in msbDict:
+            s.append(msbDict[d["targetMSB"]])
+        else:
+            s.append(targets[d["targetMSB"]])
+        s.append("and")
+        s.append(mapping[cmdNum]["targetLSB-name"])
+        lsbDict = invertDict(mapping[cmdNum]["targetLSB"])
+        if d["targetLSB"] in lsbDict:
+            s.append(lsbDict[d["targetLSB"]])
+        else:
+            s.append(targets[d["targetLSB"]])
+    else:
+        s.append("targetMSB")
+        s.append(targets[d["targetMSB"]])
+        s.append("and")
+        s.append("targetLSB")
+        s.append(targets[d["targetLSB"]])
+
+    if cmdType == "reply":
+        s.append("is")
+    else:
+        s.append("to")
+
+    if cmdType != "read":
+        if isFloat:
+            s.append(str(struct.unpack("<f", struct.pack("<I", d["value"]))))
+        else:
+            valDict = dict()
+            if cmdNum in mapping:
+                valDict = invertDict(mapping[cmdNum]["value"])
+            if d["value"] in valDict:
+                s.append(valDict[d["value"]])
+            else:
+                s.append(str(d["value"]))
+
+    return " ".join(s)
+
+
 def sysexBytes(number, targetMSB, targetLSB, value, deviceID=127, protocolVer=1, **kwargs):
     start = bytes([0xf0, 0x00, 0x26, 0x05, protocolVer, deviceID])
     for i in range(2):
