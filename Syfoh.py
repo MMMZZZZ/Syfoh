@@ -253,7 +253,8 @@ if __name__ == "__main__":
                     args.port = serialPorts[args.port]
             if not portOk:
                 parser.error("Specified port \"{}\" not among available ports or index too high. "
-                             "{} ports available: {}".format(args.port, len(serialPorts), ", ".join(["\"" + p + "\"" for p in serialPorts])))
+                             "{} ports available: {}".format(args.port, len(serialPorts),
+                                                             ", ".join(["\"" + p + "\"" for p in serialPorts])))
             ser = serial.Serial()
             ser.baudrate = args.baudrate
             ser.port = args.port
