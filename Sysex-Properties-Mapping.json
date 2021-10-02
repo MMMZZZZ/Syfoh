@@ -327,6 +327,22 @@
         "value": {},
         "type": "int"
     },
+    "0x267": {
+        "targetMSB-name": "",
+        "targetLSB-name": "coil",
+        "targetMSB": {},
+        "targetLSB": {},
+        "value": {},
+        "type": "int"
+    },
+    "0x268": {
+        "targetMSB-name": "",
+        "targetLSB-name": "coil",
+        "targetMSB": {},
+        "targetLSB": {},
+        "value": {},
+        "type": "int"
+    },
     "0x300": {
         "targetMSB-name": "program",
         "targetLSB-name": "step",

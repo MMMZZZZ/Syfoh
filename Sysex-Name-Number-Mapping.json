@@ -40,6 +40,8 @@
     "coil-offtime-min":          "0x263",
     "coil-midi-voices":          "0x264",
     "coil-buffer-time":          "0x266",
+    "coil-active-tones":         "0x267",
+    "coil-active-duty":          "0x268",
     "env-next":                  "0x300",
     "env-amp":                   "0x301",
     "env-dur":                   "0x302",
