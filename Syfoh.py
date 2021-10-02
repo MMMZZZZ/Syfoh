@@ -3,7 +3,7 @@ import json
 import argparse
 import struct
 from pathlib import Path
-from time import sleep
+import time
 try:
     import serial
     serialAvailable = True
@@ -178,6 +178,8 @@ def str2sysexDict(s:str):
         valStart = sl.index("to")
         sysexVal = " ".join(s[valStart + 1:])
     s = [strng for strng in sl[:valStart] if strng]
+    if not s:
+        return -1
     if readOnly:
         if s[0] in readCommands:
             readOnly = readCommands[s[0]]
@@ -255,6 +257,45 @@ def str2sysexDict(s:str):
 def hexStr(b:bytes):
     return " ".join(["{:02x}".format(c) for c in b])
 
+def sysex2fileOrConsole(data:bytes, mode:str, file=None, dir="Out", index=0):
+    dataDict = bytes2sysexDict(data)
+    if not dataDict["valid"] or dataDict["protocolVer"] != 1:
+        return
+    fileOut = ""
+    if mode == "HEX":
+        data = hexStr(data)
+        if file:
+            data += "\n"
+            fileOut = "a"
+    elif mode == "VAL":
+        data = str(dataDict["value"])
+        if file:
+            data += "\n"
+            fileOut = "a"
+    elif mode == "PAR":
+        data = sysexDict2str(dataDict)
+        if file:
+            data += "\n"
+            fileOut = "a"
+    elif mode == "BIN" or mode == "SYX":
+        if file:
+            fileOut = "ab"
+    else:
+        print("Unknown mode: {}. I won't be happy about this bug report because it means I goofed up...".format(mode))
+        exit()
+
+    if fileOut:
+        with open(file, fileOut) as f:
+            f.write(data)
+    else:
+        prefix = dir
+        prefix += " " * (3 - len(dir))
+        if index:
+            prefix += "[{:03}]".format(index)
+        prefix += ":"
+        print(prefix, data)
+
+
 if __name__ == "__main__":
     desc = """Sysex-Tool for Syntherrupter
               Convert human readable commands into MIDI Sysex commands and send them to a serial port. 
@@ -267,25 +308,47 @@ if __name__ == "__main__":
                              "For SERIAL and MIDI a port must be specified using -p/--port. "
                              "For HEX an output file can be specified using -o/--output. "
                              "For BIN an output file must be specified using -o/--output.")
+    parser.add_argument("-r", "--receive", required=False, default="",
+                        help="Select how to treat return data. Can be HEX, VAL/VALUE, PARSE, SYX/BIN (case insensitive). "
+                             "For HEX, VAL/VALUE and PARSE an output file can be specified using -o/--output. "
+                             "For SYX/BIN an output file must be specified using -o/--output.")
     parser.add_argument("-o", "--output", required=False, default="",
-                        help="Output file for hex or binary data.")
-    parser.add_argument("-p", "--port", required=False,
+                        help="Output file for hex, binary or return data.")
+    parser.add_argument("-p", "--port-out", "--port", required=False,
                         help="Serial or MIDI port to send commands to. Example (Windows): \"COM3\". If an integer is "
                              "given, it'll be used as index in the list of available ports (see -l/--list).")
+    parser.add_argument("-q", "--port-in", required=False,
+                        help="Serial or MIDI port to read incoming (return) data from. If not specified, the same port "
+                             "is used for incoming and outgoing data. Note: when using MIDI ports you need to "
+                             "explicitly specify the input port - even if it's the same as the output port. If you're "
+                             "using loopMIDI, you MUST create separate loopMIDI ports. Otherwise you'll get every "
+                             "outgoing message echoed back. Also note that you cannot mix serial and midi ports. ")
     parser.add_argument("-b", "--baudrate", required=False, type=int, default=115200,
                         help="Select baudrate for serial commands. Default is 115200baud/s.")
+    parser.add_argument("-w", "--watch", required=False, type=float, default=0,
+                        help="Specify an interval in seconds for repeating the read commands. This allows you to "
+                             "monitor certain values. Can be a float (f.ex. 0.1). Set commands will only be sent once.")
     parser.add_argument("-l", "--list", required=False, action="store_true",
                         help="List all available serial and MIDI ports.")
+    parser.add_argument("--log-no-out", required=False, action="store_true",
+                        help="Use this flag to disable logging of the outgoing hex data. Mainly useful when using "
+                             "-w/--watch")
+    parser.add_argument("--log-no-index", required=False, action="store_true",
+                        help="Use this flag to disable the index number on all console messages. The index is the "
+                             "number of the command. 1=first, 2=second, etc. This way you can quickly associate the "
+                             "log info with the respective command from your input file. ")
 
     args = parser.parse_args()
 
-    serialPorts = []
-    midiPorts = []
+    serialPorts  = []
+    midiOutPorts = []
     if serialAvailable:
         serialPorts = [p.name for p in comports()]
     if midiAvailable:
-        midi = rtmidi.MidiOut()
-        midiPorts = midi.get_ports()
+        midiOut = rtmidi.MidiOut()
+        midiOutPorts = midiOut.get_ports()
+        midiIn = rtmidi.MidiIn()
+        midiInPorts = midiIn.get_ports()
 
     if args.list:
         if serialAvailable:
@@ -296,8 +359,11 @@ if __name__ == "__main__":
             print("To list or use serial ports you need to install the pyserial package: "
                   "https://pypi.org/project/pyserial/")
         if midiAvailable:
-            print("List of available MIDI ports")
-            for i, p in enumerate(midiPorts):
+            print("List of available MIDI Out ports")
+            for i, p in enumerate(midiOutPorts):
+                print("{:3}: \"{}\"".format(i, p))
+            print("List of available MIDI In ports")
+            for i, p in enumerate(midiInPorts):
                 print("{:3}: \"{}\"".format(i, p))
         else:
             print("To list or use MIDI ports you need to install the python-rtmidi package: "
@@ -311,111 +377,273 @@ if __name__ == "__main__":
 
     args.mode = args.mode[:3].upper()
     if args.mode not in ["SER", "HEX", "BIN", "MID"]:
-        parser.error("Invalid mode. Must be SER/SERIAL, MID/MIDI, HEX or BIN")
+        parser.error("Invalid mode. Must be SER/SERIAL, MID/MIDI, HEX or BIN (case insensitive).")
+
+    args.receive = args.receive[:3].upper()
+    if args.receive and args.mode not in ("SER", "MID"):
+        parser.error("Invalid mode. To receive data you must select SER/SERIAL or MID/MIDI (case insensitive).")
+    if args.receive not in ["", "HEX", "PAR", "VAL", "BIN", "SYX"]:
+        parser.error("Invalid receive mode. Must be HEX, PARSE, VAL/VALUE or BIN/SYX (case insensitive).")
+    if not args.receive and args.mode == "MID":
+        parser.error("Input MIDI port missing. See -h/--help for details about the input port.")
+
+    if args.watch and not args.receive:
+        parser.error("-r/--receive required to use -w/--watch.")
+    if args.watch and args.watch < 0.1:
+        parser.error("Watch interval cannot be shorter than 0.1s (100ms)")
 
     if args.output:
         out = Path(args.output)
         try:
-            with open(out, "wb") as f:
-                f.close()
+            # make sure the file exists and is blank.
+            with open(out, "w") as f:
+                pass
         except:
             parser.error("Invalid output file.")
-    elif args.mode == "BIN":
+
+    elif args.mode == "BIN" or args.receive in ("BIN", "SYX"):
         parser.error("Valid output file required.")
     else:
         out = ""
 
     p = Path(args.input)
-    cmds = []
+    strs = []
     if p.is_file():
         with open(p) as f:
-            cmds = [cmd.rstrip("\n") for cmd in f.readlines()]
+            strs = [cmd.rstrip("\n") for cmd in f.readlines()]
     else:
-        cmds.append(args.input)
+        strs.append(args.input)
 
-    strCmds = []
     reading = []
-    for i,e in enumerate(cmds):
-        cmds[i] = str2sysexDict(e)
-        if cmds[i] == -1:
-            print("Ignored invald command: {}".format(e))
+    cmds = []
+    validStrs = []
+    for i,e in enumerate(strs):
+        e = str2sysexDict(e)
+        if e == -1:
+            print("Ignored invald command: {}".format(strs[i]))
         else:
-            reading[i] = cmds[i]["reading"]
-            cmds[i] = sysexBytes(**cmds[i])
-            strCmds.append(hexStr(cmds[i]))
+            validStrs.append(strs[i])
+            cmds.append(sysexBytes(**e))
+            reading.append(e["reading"])
 
+    print("")
+    print("Valid commands ({}):".format(len(cmds)))
+    for i,e in enumerate(validStrs):
+        prefix = "Out"
+        if reading[i]:
+            prefix = "In "
+        if not args.log_no_index:
+            prefix += "[{:03}]".format(i)
+        prefix += ":"
+        print(prefix, e)
+    print("")
+
+    print("Incoming/Outgoing Data: ")
     if args.mode == "SER":
-        if serialAvailable:
-            portOk = (args.port in serialPorts)
-            if not portOk:
-                isInt = True
-                try:
-                    args.port = int(args.port)
-                except:
-                    isInt = False
-                if isInt and args.port < len(serialPorts):
-                    portOk = True
-                    args.port = serialPorts[args.port]
-            if not portOk:
-                parser.error("Specified port \"{}\" not among available ports or index too high. "
-                             "{} ports available: {}".format(args.port, len(serialPorts),
-                                                             ", ".join(["\"" + p + "\"" for p in serialPorts])))
-            ser = serial.Serial()
-            ser.baudrate = args.baudrate
-            ser.port = args.port
-            ser.open()
-            for i,e in enumerate(cmds):
-                print(strCmds[i])
-                ser.write(e)
-                while ser.out_waiting:
-                    pass
-                # Let Syntherrupter process the data
-                sleep(0.04)
-            ser.close()
-            print("Sent {} command(s) to serial port.".format(len(cmds)))
-        else:
+        if not serialAvailable:
             parser.error("To use the serial feature you need to install the pyserial package: "
                          "https://pypi.org/project/pyserial/")
+        portOk = (args.port_out in serialPorts)
+        if not portOk:
+            isInt = True
+            try:
+                args.port_out = int(args.port_out)
+            except:
+                isInt = False
+            if isInt and args.port_out < len(serialPorts):
+                portOk = True
+                args.port_out = serialPorts[args.port_out]
+        if not portOk:
+            parser.error("Specified port \"{}\" not among available ports or index too high. "
+                         "{} ports available: {}".format(args.port_out, len(serialPorts),
+                                                         ", ".join(["\"" + p + "\"" for p in serialPorts])))
+        # Copy paste isn't nice. but it is easy. even though future me will hate it.
+        portInOk = (args.port_in in serialPorts)
+        if not portInOk:
+            isInt = True
+            try:
+                args.port_in = int(args.port_in)
+            except:
+                isInt = False
+            if isInt and args.port_in < len(serialPorts):
+                portInOk = True
+                args.port_in = serialPorts[args.port_in]
+        if not portInOk:
+            parser.error("Specified port \"{}\" not among available ports or index too high. "
+                         "{} ports available: {}".format(args.port_in, len(serialPorts),
+                                                         ", ".join(["\"" + p + "\"" for p in serialPorts])))
+        serOut = serial.Serial()
+        serOut.baudrate = args.baudrate
+        serOut.port = args.port_out
+        serOut.open()
+        serIn = serial.Serial()
+        if portInOk:
+            serIn.baudrate = args.baudrate
+            serIn.port = args.port_in
+            serIn.open()
+        else:
+            serIn = serOut
+        txCounter = 0
+        looping = False
+        if args.watch > 0:
+            looping = True
+        else:
+            # loop time needs to be >0 nonetheless
+            args.watch = 1
+        loopTime = time.time()
+        try:
+            # do-while loop; break condition is at the bottom of the loop.
+            while True:
+                if time.time() - loopTime < args.watch:
+                    continue
+                loopTime = time.time()
+                for i,e in enumerate(cmds):
+                    # (for watch mode) process non-read commands only once.
+                    if not e:
+                        continue
+                    # log index
+                    log_index = i + 1
+                    if args.log_no_index:
+                        log_index = 0
+                    if not reading[i]:
+                        # this does not affect e which will be used in this iteration.
+                        cmds[i] = None
+                        sysex2fileOrConsole(e, "HEX", None, "Out", log_index)
+                    serOut.write(e)
+                    txCounter += 1
+                    while serOut.out_waiting:
+                        pass
+                    # Let Syntherrupter process the data
+                    time.sleep(0.04)
+                    # read incoming data if there is any
+                    if portInOk:
+                        timeout = 0.04
+                        start = time.time()
+                        while time.time() - start < timeout:
+                            if serIn.in_waiting < 16:
+                                continue
+                            data = serIn.read(16)
+                            sysex2fileOrConsole(data, args.receive, args.output, "In", log_index)
+                            start = time.time()
+                if not looping:
+                    # abort after 1 iteration
+                    break
+        except KeyboardInterrupt:
+            print("\nUser aborted watching by keyboard interrupt.")
+        serOut.close()
+        serIn.close()
+        print("Sent {} command(s) to serial port.".format(txCounter))
 
     elif args.mode == "MID":
-        if midiAvailable:
-            portOk = (args.port in midiPorts)
-            if portOk:
-                args.port = midiPorts.index(args.port)
-            else:
-                isInt = True
-                try:
-                    args.port = int(args.port)
-                except:
-                    isInt = False
-                if isInt and args.port < len(midiPorts):
-                    portOk = True
-            if not portOk:
-                parser.error("Specified port \"{}\" not among available ports or index too high. "
-                             "{} ports available: {}".format(args.port, len(midiPorts), ", ".join(["\"" + p + "\"" for p in midiPorts])))
-            midi.open_port(args.port)
-            for i,e in enumerate(cmds):
-                print(strCmds[i])
-                midi.send_message(e)
-                # Let Syntherrupter process the data
-                sleep(0.04)
-            del midi
-            print("Sent {} command(s) to MIDI port.".format(len(cmds)))
-        else:
+        if not midiAvailable:
             parser.error("To use the MIDI feature you need to install the python-rtmidi package: "
                          "https://pypi.org/project/python-rtmidicd/")
+        portOk = (args.port_out in midiOutPorts)
+        if portOk:
+            args.port_out = midiOutPorts.index(args.port_out)
+        else:
+            isInt = True
+            try:
+                args.port_out = int(args.port_out)
+            except:
+                isInt = False
+            if isInt and args.port_out < len(midiOutPorts):
+                portOk = True
+        if not portOk:
+            parser.error("Specified port \"{}\" not among available output ports or index too high. "
+                         "{} ports available: {}".format(args.port_out, len(midiOutPorts),
+                                                         ", ".join(["\"" + p + "\"" for p in midiOutPorts])))
+        portInOk = (args.port_in in midiInPorts)
+        if portInOk:
+            args.port_in = midiInPorts.index(args.port_in)
+        else:
+            isInt = True
+            try:
+                args.port_in = int(args.port_in)
+            except:
+                isInt = False
+            if isInt and args.port_in < len(midiInPorts):
+                portInOk = True
+        if not portInOk:
+            parser.error("Specified port \"{}\" not among available input ports or index too high. "
+                         "{} ports available: {}".format(args.port_in, len(midiInPorts),
+                                                         ", ".join(["\"" + p + "\"" for p in midiInPorts])))
+        midiOut.open_port(args.port_out)
+        if portInOk:
+            midiIn.open_port(args.port_in)
+            midiIn.ignore_types(sysex=False)
+        txCounter = 0
+        looping = False
+        if args.watch > 0:
+            looping = True
+        else:
+            # loop time needs to be >0 nonetheless
+            args.watch = 1
+        loopTime = time.time()
+        try:
+            # do-while loop; break condition is at the bottom of the loop.
+            while True:
+                if time.time() - loopTime < args.watch:
+                    continue
+                loopTime = time.time()
+                for i,e in enumerate(cmds):
+                    # (for watch mode) process non-read commands only once.
+                    if not e:
+                        continue
+                    # log index
+                    log_index = i + 1
+                    if args.log_no_index:
+                        log_index = 0
+                    if not reading[i]:
+                        # this does not affect e which will be used in this iteration.
+                        cmds[i] = None
+                    if not args.log_no_out:
+                        sysex2fileOrConsole(e, "HEX", None, "Out", args.log_index)
+                    midiOut.send_message(e)
+                    txCounter += 1
+                    # Let Syntherrupter process the data
+                    time.sleep(0.04)
+                    # read incoming data if there is any
+                    if portInOk:
+                        timeout = 0.04
+                        start = time.time()
+                        while time.time() - start < timeout:
+                            msg = midiIn.get_message()
+                            if not msg:
+                                continue
+                            sysex2fileOrConsole(msg[0], args.receive, args.output, "In", log_index)
+                            start = time.time()
+                if not looping:
+                    # abort after 1 iteration
+                    break
+        except KeyboardInterrupt:
+            print("\nUser aborted watching by keyboard interrupt.")
+        del midiOut
+        del midiIn
+        print("Sent {} command(s) to MIDI port.".format(txCounter))
 
     elif args.mode == "HEX":
-        for cmd in strCmds:
-            print(cmd)
-        if (out):
-            with open(out, "w") as f:
-                f.writelines(strCmds)
-                print("Wrote {} command(s) as hex to file.".format(len(cmds)))
+        for i,e in enumerate(cmds):
+            # log index
+            log_index = i + 1
+            if args.log_no_index:
+                log_index = 0
+            if not args.log_no_out:
+                sysex2fileOrConsole(e, "HEX", None, "Out", log_index)
+            if (out):
+                sysex2fileOrConsole(e, "HEX", out, "Out", log_index)
+        if out:
+            print("Wrote {} command(s) as hex to file.".format(len(cmds)))
 
     elif args.mode == "BIN":
-        with open(out, "wb") as f:
-            for i,e in enumerate(cmds):
-                print(strCmds[i], end="")
-                f.write(e)
+        for i, e in enumerate(cmds):
+            # log index
+            log_index = i + 1
+            if args.log_no_index:
+                log_index = 0
+            if not args.log_no_out:
+                sysex2fileOrConsole(e, "HEX", None, "Out", log_index)
+            if (out):
+                sysex2fileOrConsole(e, "BIN", out, "Out", log_index)
+        if out:
             print("Wrote {} command(s) as binary to file.".format(len(cmds)))
