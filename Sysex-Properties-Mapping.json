@@ -183,6 +183,14 @@
         "value": {"key": 41153700, "reset-key": 41153700},
         "type": "int"
     },
+    "0x203": {
+        "targetMSB-name": "",
+        "targetLSB-name": "",
+        "targetMSB": {},
+        "targetLSB": {},
+        "value": {},
+        "type": "int"
+    },
     "0x220": {
         "targetMSB-name": "",
         "targetLSB-name": "",

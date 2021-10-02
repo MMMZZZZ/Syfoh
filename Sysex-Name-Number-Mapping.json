@@ -22,6 +22,7 @@
     "dev-eeprom-update":         "0x200",
     "dev-id":                    "0x201",
     "dev-reset":                 "0x202",
+    "dev-time":                  "0x203",
     "scr-bright":                "0x220",
     "scr-standby":               "0x221",
     "ui-bt-time":                "0x222",
