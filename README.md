@@ -75,10 +75,12 @@ Equal variant: set 0x20 for MODE simple to 1
 
 * In addition to the command-specific targets, a target device can be specified using `device [deviceID]`. If no device is given, the command is sent as broadcast to all devices. In a nutshell, this is necessary if more than one Syntherrupter is connected to the same MIDI bus. More details can be found in the [sysex command documentation](https://github.com/MMMZZZZ/Syntherrupter/blob/dev/Documentation/Wiki/Custom%20MIDI%20Commands.md#system-exclusive-messages-sysex). 
 * Multiple targets are separated by `and`. The order is not important.
+* Almost all parameters can be written with floats - except for things like enable/disable commands where floats don't make sense. Therefore you don't need to convert anything to percent or permille. Details and conventions for float values can be found in the [sysex command documentation](https://github.com/MMMZZZZ/Syntherrupter/blob/dev/Documentation/Wiki/Custom%20MIDI%20Commands.md#conventions).
 
-For MIDI program/envelope `0x20` on device `0`, set the amplitude of step 1 to 1.75f. 
+For MIDI program/envelope `0x20` on device `0`, set the amplitude of step 1 to 1.75. 
 ```
-set Envelope-Amplitude for device 0 and program 0x20 and step 1 to 1750
+Command:       set envelope-amplitude for device 0 and program 0x20 and step 1 to 1750
+Equal variant: set envelope-amplitude for device 0 and program 0x20 and step 1 to 1.75
 ```
 
 * Broadcasting/wildcards not only work for the device but for all targets, too. You can broadcast by explicitly writing the broadcast value `127` or `0x7f` or by using the keyword `all`. Not all commands support broadcasting because it doesn't always make sense. 
@@ -102,7 +104,7 @@ set user-name for user 0 and char-group 3 to !
 
 ## Batch Processing Text Files
 
-Syfoh can not only accept a single command from the command line but also a text file with any amount of commands, one per line. Here's and example of how such a file could look (Included in this repository as [Example-Input.txt](/Example-Input.txt)). It enables stereo for all 6 coils, sets reach mode to constant and distributes them equally across the stereo range. 
+Syfoh can not only accept a single command from the command line but also a text file with any amount of commands, one per line. Here's and example of how such a file could look (Included in this repository as [Example-Input.txt](/Example-Input.txt)). It enables stereo for all 6 coils, sets reach mode to constant and distributes them equally across the stereo range. The example also demonstrates how easy such setups are with the float commands; no need to mess with fractions of 127 or other weird values. 
 
 Any line that doesn't mach the format will be ignored. So you can use C style comments, Python style, whatever. You probably could write plain text and it would be properly ignored. Only thing you can't do is write a comment in the same line as a command. 
 
@@ -110,15 +112,15 @@ Any line that doesn't mach the format will be ignored. So you can use C style co
 
 ```
 # Disable UI updates to ensure fast processing
-set ui-update to disabled
+set ui-update to manual
 
 # Configure stereo mode, range and position for all six coils
 set midi-pan-cfg for coil all to constant
-set midi-pan-reach for coil all to 12
-set midi-pan-pos for coil 0 to 1
-set midi-pan-pos for coil 1 to 26
-set midi-pan-pos for coil 2 to 51
-set midi-pan-pos for coil 3 to 76
-set midi-pan-pos for coil 4 to 101
-set midi-pan-pos for coil 5 to 126
+set midi-pan-reach for coil all to 0.1
+set midi-pan-pos for coil 0 to 0.0
+set midi-pan-pos for coil 1 to 0.2
+set midi-pan-pos for coil 2 to 0.4
+set midi-pan-pos for coil 3 to 0.6
+set midi-pan-pos for coil 4 to 0.8
+set midi-pan-pos for coil 5 to 1.0
 ```
