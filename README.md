@@ -1,16 +1,33 @@
 # Syfoh
 
-## Overview 
+Syfoh - **Sy**sex commands **fo**r **h**umans - is a simple Python command line tool which takes a human readable text source and generates Sysex commands as defined by the [Syntherrupter Sysex Standard](https://github.com/MMMZZZZ/Syntherrupter/blob/dev/Documentation/Wiki/Custom%20MIDI%20Commands.md#system-exclusive-messages-sysex).
 
-Syfoh - **Sy**sex commands **fo**r **h**umans - is a simple Python command line tool which takes a human readable source and generates Sysex commands as defined by the [Syntherrupter Sysex Standard](https://github.com/MMMZZZZ/Syntherrupter/blob/dev/Documentation/Wiki/Custom%20MIDI%20Commands.md#system-exclusive-messages-sysex):
+## Index
+
+* [Overview](#overview)
+* [Requirements](#requirements)
+* [Setup](#setup)
+* [The Human Readable Sysex Format](#the-human-readable-sysex-format)
+* [Usage](#usage)
+  * [General Examples and Explanations](#general-examples-and-explanations)
+  * [Batch Processing Text Files](#batch-processing-text-files)
+* [Reading and Monitoring Values](#reading-and-monitoring-values)
+  * [Examples](#examples)
+    * [Basics](#basics-chosing-ports-writing-read-commands)
+    * [Monitoring](#monitoring)
+    * [Export settings](#export-settings)
+
+## Overview
+
+In a nutshell, Syfohs input and output look like the following. Readable input, machine output. Therefore you don't need to speak machine language. 
 
 ```
-Input:  Set ontime for coil 1 and mode simple to 100
+Input:  set ontime for mode simple and coil 1 to 100
 
 Output: F0 00 26 05 01 7F 21 00 01 00 64 00 00 00 00 F7
 ```
 
-It can [batch process text files](#batch-processing-text-files) with multiple commands and save the output as text or binary file, or send it directly to a serial port. 
+Syfoh can batch process text files with multiple commands, process any data that Syntherrupter sends back, and store everything as text files or binary files which you can integrate into your MIDI files if desired. Changing Syntherrupters configuration between different MIDI files boils down to a single click.
 
 ## Requirements
 
@@ -102,7 +119,7 @@ set user-name for user 0 and char-group 2 to orld
 set user-name for user 0 and char-group 3 to !
 ```
 
-## Batch Processing Text Files
+### Batch Processing Text Files
 
 Syfoh can not only accept a single command from the command line but also a text file with any amount of commands, one per line. Here's and example of how such a file could look (Included in this repository as [Example-Input.txt](/Example-Input.txt)). It enables stereo for all 6 coils, sets reach mode to constant and distributes them equally across the stereo range. The example also demonstrates how easy such setups are with the float commands; no need to mess with fractions of 127 or other weird values. 
 
