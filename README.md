@@ -18,6 +18,15 @@ It can [batch process text files](#batch-processing-text-files) with multiple co
 * Optional: [pyserial](https://pypi.org/project/pyserial/)
 * Optional: [python-rtmidi](https://pypi.org/project/python-rtmidi/)
 
+## Setup
+
+* Install Python 3. Make sure you tick the option to add python to your PATH variable (I think this only applies to windows users but not sure). 
+* Optional: open a console and install the two optional python modules by executing `pip install pyserial` (similarly for rtmidi). 
+* Optional: follow the [Syntherrupter PC MIDI Setup](https://github.com/MMMZZZZ/Syntherrupter#pc-midi-setup) to communicate with Syntherrupter via MIDI. 
+* Clone this repository. You can also download it but cloning (f.ex. using [GitHub Desktop]()) makes it easier to keep the script up to date. 
+* Open a console inside the folder of this repository. If you open your console elsewhere you need to specify the full path to the script in the next step.
+* Run the script with `python Syfoh.py -h`. 
+
 ## The Human Readable Sysex Format
 
 Input commands have the following basic structure:
