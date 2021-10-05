@@ -96,7 +96,7 @@
     "range-mode-simple":         "0x005f0040",
     "range-mode-midi-live":      "0x007f0060",
     "range-mode-lightsaber":     "0x010f0100",
-    "range-settings-system":     "0x021f0200",
+    "range-settings-device":     "0x021f0200",
     "range-settings-ui":         "0x023f0220",
     "range-settings-user":       "0x025f0240",
     "range-settings-coil":       "0x027f0260",
