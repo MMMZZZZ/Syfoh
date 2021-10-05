@@ -70,7 +70,7 @@ Sending data to a MIDI port works exactly the same but with `-m MID`. Note that 
 ```
 Command:       Set enable for mode simple to enabled
 Equal variant: set Mode-Enable for MODE 1 to 0x01
-Equal variant: set 0x20 for MODE simple to 1
+Equal variant: set 0x20 for MODE simple to 0b1
 ```
 
 * In addition to the command-specific targets, a target device can be specified using `device [deviceID]`. If no device is given, the command is sent as broadcast to all devices. In a nutshell, this is necessary if more than one Syntherrupter is connected to the same MIDI bus. More details can be found in the [sysex command documentation](https://github.com/MMMZZZZ/Syntherrupter/blob/dev/Documentation/Wiki/Custom%20MIDI%20Commands.md#system-exclusive-messages-sysex). 
