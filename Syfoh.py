@@ -506,7 +506,7 @@ if __name__ == "__main__":
             if isInt and args.port_in < len(serialPorts):
                 portInOk = True
                 args.port_in = serialPorts[args.port_in]
-        if not portInOk:
+        if args.port_in and not portInOk:
             parser.error("Specified port \"{}\" not among available ports or index too high. "
                          "{} ports available: {}".format(args.port_in, len(serialPorts),
                                                          ", ".join(["\"" + p + "\"" for p in serialPorts])))
@@ -608,7 +608,7 @@ if __name__ == "__main__":
                 isInt = False
             if isInt and args.port_in < len(midiInPorts):
                 portInOk = True
-        if not portInOk:
+        if args.port_in and not portInOk:
             parser.error("Specified port \"{}\" not among available input ports or index too high. "
                          "{} ports available: {}".format(args.port_in, len(midiInPorts),
                                                          ", ".join(["\"" + p + "\"" for p in midiInPorts])))
