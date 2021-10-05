@@ -51,7 +51,7 @@ def findInt(num:str):
                 return None
     return n
 
-def bytes2sysexDict(b:bytes):
+def bytes2sysexDict(b:bytes, expectFloat=False):
     sysex = {"number": 0, "targetMSB": 0, "targetLSB": 0, "value": 0, "deviceID": 0, "protocolVer": 0, "valid": False}
     if len(b) != 16 or b[0] != 0xf0 or b[-1] != 0xf7:
         sysex["valid"] = False
@@ -63,6 +63,9 @@ def bytes2sysexDict(b:bytes):
         sysex["targetMSB"]   = b[9]
         for i in range(5):
             sysex["value"]  += b[10 + i] << (7 * i)
+
+        if sysex["number"] & 0x2000 or expectFloat:
+            sysex["value"] = struct.unpack("<f", struct.pack("<I", sysex["value"]))[0]
         sysex["valid"] = True
     return sysex
 
@@ -76,9 +79,12 @@ def invertDict(d:dict):
 
 def sysexDict2str(d:dict):
     readCommands = {v:k for k,v in {"check": 0x02, "read": 0x03, "get": 0x04}.items()}
-    reply = {0x01: "input"}
     targets = {127: "all"}
     targets.update({k:str(k) for k in range(127)})
+    if not "origin" in d:
+        # "origin" is used for replies. it encodes the type of read command that
+        # caused this reply. If no origin is given, it defaults to 0.
+        d["origin"] = 0x00
     targetPrefix = "for"
     cmdNames = invertDict(names2num)
     s = []
@@ -89,10 +95,21 @@ def sysexDict2str(d:dict):
         s.append(readCommands[cmdNum])
         cmdNum = d["value"]
         targetPrefix = "of"
-    elif cmdNum in reply:
-        cmdType = "reply"
-        s.append(reply[cmdNum])
-        targetPrefix = "from"
+    elif cmdNum == 0x01: # reply
+        if d["origin"] == 0x02:#"check"
+            cmdType = "check_reply"
+            s.append("confirming support of")
+            targetPrefix = "for"
+            # In this case the reply value encodes the PN that's supported.
+            cmdNum = d["value"]
+            if cmdNum in cmdNames:
+                s.append(cmdNames[cmdNum])
+            else:
+                s.append(str(cmdNum))
+        else:
+            cmdType = "reply"
+            s.append("input")
+            targetPrefix = "from"
     else:
         s.append("set")
         targetPrefix = "for"
@@ -102,7 +119,7 @@ def sysexDict2str(d:dict):
         cmdNum &= ~0x2000
         isFloat = True
 
-    if cmdType != "reply":
+    if "reply" not in cmdType:
         if cmdNum in cmdNames:
             s.append(cmdNames[cmdNum])
         else:
@@ -135,10 +152,10 @@ def sysexDict2str(d:dict):
 
     if cmdType == "reply":
         s.append("is")
-    else:
+    elif cmdType != "check_reply":
         s.append("to")
 
-    if cmdType != "read":
+    if cmdType not in ("read", "check_reply"):
         if isFloat:
             s.append(str(struct.unpack("<f", struct.pack("<I", d["value"]))))
         else:
@@ -166,7 +183,7 @@ def sysexBytes(number, targetMSB, targetLSB, value, deviceID=127, protocolVer=1,
     return start
 
 def str2sysexDict(s:str):
-    sysex = {"number": 0, "targetMSB": 0, "targetLSB": 0, "value": 0, "deviceID": 127, "reading": False}
+    sysex = {"number": 0, "targetMSB": 0, "targetLSB": 0, "value": 0, "deviceID": 127, "reading": 0}
     readCommands = {"check": 0x02, "read": 0x03, "get": 0x04}
     s = s.split(" ")
     sl = [strng.lower() for strng in s]
@@ -183,17 +200,20 @@ def str2sysexDict(s:str):
     if readOnly:
         if s[0] in readCommands:
             readOnly = readCommands[s[0]]
-            sysex["reading"] = True
+            sysex["reading"] = readOnly
         else:
             return -1
     elif s[0] != "set":
         return -1
+    explicitNum = False
     num = findInt(s[1])
     if num is None:
         if s[1] in names2num:
             num = names2num[s[1]]
         else:
             return -1
+    else:
+        explicitNum = True
     sysex["number"] = num
     targets = []
     if len(s) > 4 and s[2] in ("of", "for"):
@@ -210,25 +230,33 @@ def str2sysexDict(s:str):
                     return -1
                 sysex["deviceID"] = n
                 continue
-            elif t["name"] == mapping[num]["targetMSB-name"]:
+            elif t["name"] == mapping[num & 0xffff]["targetMSB-name"]: #0xffff: for range commands use lower bound for lookup
                 t["type"] = "targetMSB"
-            elif t["name"] == mapping[num]["targetLSB-name"]:
+            elif t["name"] == mapping[num & 0xffff]["targetLSB-name"]:
                 t["type"] = "targetLSB"
             else:
                 return -1
             n = findInt(t["val"])
             if n is None:
-                if t["val"] in mapping[num][t["type"]]:
-                    n = mapping[num][t["type"]][t["val"]]
+                if t["val"] in mapping[num & 0xffff][t["type"]]:
+                    n = mapping[num & 0xffff][t["type"]][t["val"]]
                 else:
                     return -1
             t["val"] = n
             sysex[t["type"]] = t["val"]
 
     if readOnly:
+        # Use float as default if available. Do this only if the sysex number (and thus float/nofloat)
+        # has not been explicitly specified (e.g. "ontime" leads to a float (0x2021) response
+        # but "0x21" remains "0x21".
+        if not explicitNum:
+            if num in mapping:
+                if mapping[num]["type"] == "float":
+                    num |= 0x2000
+
         # When reading, what has been processed above as sysex number actually
         # belongs to the value (while the number indicates the type of read command).
-        sysex["value"] = sysex["number"]
+        sysex["value"] = num
         sysex["number"] = readOnly
     else:
         if mapping[num]["type"] == "str":
@@ -257,8 +285,10 @@ def str2sysexDict(s:str):
 def hexStr(b:bytes):
     return " ".join(["{:02x}".format(c) for c in b])
 
-def sysex2fileOrConsole(data:bytes, mode:str, file=None, dir="Out", index=0):
-    dataDict = bytes2sysexDict(data)
+def sysex2fileOrConsole(data:bytes, mode:str, file=None, dir="Out", index=0, cmdOrigin=0, expectFloat=False):
+    data = bytes(data) # incoming data could also be a list (f.ex. when it comes from the midirt library)
+    dataDict = bytes2sysexDict(data, expectFloat)
+    dataDict["origin"] = cmdOrigin
     if not dataDict["valid"] or dataDict["protocolVer"] != 1:
         return
     fileOut = ""
@@ -309,9 +339,10 @@ if __name__ == "__main__":
                              "For HEX an output file can be specified using -o/--output. "
                              "For BIN an output file must be specified using -o/--output.")
     parser.add_argument("-r", "--receive", required=False, default="",
-                        help="Select how to treat return data. Can be HEX, VAL/VALUE, PARSE, SYX/BIN (case insensitive). "
-                             "For HEX, VAL/VALUE and PARSE an output file can be specified using -o/--output. "
-                             "For SYX/BIN an output file must be specified using -o/--output.")
+                        help="Select how to treat return data. Can be HEX, VAL/VALUE, PAR/PARSED, SYX/BIN "
+                             "(case insensitive). "
+                             "For HEX, VAL/VALUE and PAR/PARSED an output file can be specified using -o/--output. "
+                             "For SYX/BIN an output file must be specified using -o/--output.D")
     parser.add_argument("-o", "--output", required=False, default="",
                         help="Output file for hex, binary or return data.")
     parser.add_argument("-p", "--port-out", "--port", required=False,
@@ -359,10 +390,10 @@ if __name__ == "__main__":
             print("To list or use serial ports you need to install the pyserial package: "
                   "https://pypi.org/project/pyserial/")
         if midiAvailable:
-            print("List of available MIDI Out ports")
+            print("List of available MIDI Out ports:")
             for i, p in enumerate(midiOutPorts):
                 print("{:3}: \"{}\"".format(i, p))
-            print("List of available MIDI In ports")
+            print("List of available MIDI In ports:")
             for i, p in enumerate(midiInPorts):
                 print("{:3}: \"{}\"".format(i, p))
         else:
@@ -383,12 +414,14 @@ if __name__ == "__main__":
     if args.receive and args.mode not in ("SER", "MID"):
         parser.error("Invalid mode. To receive data you must select SER/SERIAL or MID/MIDI (case insensitive).")
     if args.receive not in ["", "HEX", "PAR", "VAL", "BIN", "SYX"]:
-        parser.error("Invalid receive mode. Must be HEX, PARSE, VAL/VALUE or BIN/SYX (case insensitive).")
-    if not args.receive and args.mode == "MID":
+        parser.error("Invalid receive mode. Must be HEX, PAR/PARSED, VAL/VALUE or BIN/SYX (case insensitive).")
+    if args.receive and args.mode == "MID" and not args.port_in:
         parser.error("Input MIDI port missing. See -h/--help for details about the input port.")
 
+    if args.port_in and not args.receive:
+        parser.error("-q/--port-in requires -r/--receive.")
     if args.watch and not args.receive:
-        parser.error("-r/--receive required to use -w/--watch.")
+        parser.error("-w/--watch requires -r/--receive.")
     if args.watch and args.watch < 0.1:
         parser.error("Watch interval cannot be shorter than 0.1s (100ms)")
 
@@ -400,7 +433,6 @@ if __name__ == "__main__":
                 pass
         except:
             parser.error("Invalid output file.")
-
     elif args.mode == "BIN" or args.receive in ("BIN", "SYX"):
         parser.error("Valid output file required.")
     else:
@@ -414,7 +446,6 @@ if __name__ == "__main__":
     else:
         strs.append(args.input)
 
-    reading = []
     cmds = []
     validStrs = []
     for i,e in enumerate(strs):
@@ -423,22 +454,29 @@ if __name__ == "__main__":
             print("Ignored invald command: {}".format(strs[i]))
         else:
             validStrs.append(strs[i])
-            cmds.append(sysexBytes(**e))
-            reading.append(e["reading"])
+            # append binary form to sysex dict
+            e["bin"] = sysexBytes(**e)
+            cmds.append(e)
 
     print("")
     print("Valid commands ({}):".format(len(cmds)))
     for i,e in enumerate(validStrs):
-        prefix = "Out"
-        if reading[i]:
-            prefix = "In "
+        prefix = "Set"
+        if cmds[i]["reading"]:
+            prefix = "Req"
         if not args.log_no_index:
-            prefix += "[{:03}]".format(i)
+            prefix += "[{:03}]".format(i + 1)
         prefix += ":"
         print(prefix, e)
     print("")
 
-    print("Incoming/Outgoing Data: ")
+    if not len(cmds):
+        exit()
+
+    if args.log_no_out:
+        print("Incoming Data:")
+    else:
+        print("Incoming/Outgoing Data: ")
     if args.mode == "SER":
         if not serialAvailable:
             parser.error("To use the serial feature you need to install the pyserial package: "
@@ -490,26 +528,24 @@ if __name__ == "__main__":
         else:
             # loop time needs to be >0 nonetheless
             args.watch = 1
-        loopTime = time.time()
         try:
             # do-while loop; break condition is at the bottom of the loop.
             while True:
-                if time.time() - loopTime < args.watch:
-                    continue
                 loopTime = time.time()
                 for i,e in enumerate(cmds):
-                    # (for watch mode) process non-read commands only once.
+                    # (for watch mode) set commands (a.k.a. non-read commands) are deleted after they've been sent.
+                    # Thus, skip any empty "leftovers". They're not removed to keep the log_index working.
                     if not e:
                         continue
                     # log index
                     log_index = i + 1
                     if args.log_no_index:
                         log_index = 0
-                    if not reading[i]:
+                    if not e["reading"]:
                         # this does not affect e which will be used in this iteration.
                         cmds[i] = None
-                        sysex2fileOrConsole(e, "HEX", None, "Out", log_index)
-                    serOut.write(e)
+                        sysex2fileOrConsole(e["bin"], "HEX", None, "Out", log_index)
+                    serOut.write(e["bin"])
                     txCounter += 1
                     while serOut.out_waiting:
                         pass
@@ -523,11 +559,19 @@ if __name__ == "__main__":
                             if serIn.in_waiting < 16:
                                 continue
                             data = serIn.read(16)
-                            sysex2fileOrConsole(data, args.receive, args.output, "In", log_index)
+                            expectFloat = e["number"] & 0x2000
+                            if e["reading"]:
+                                expectFloat = e["value"] & 0x2000
+                            sysex2fileOrConsole(data, args.receive, args.output, "In", log_index, e["reading"], expectFloat)
                             start = time.time()
+
                 if not looping:
-                    # abort after 1 iteration
+                    # abort after 1 iteration without waiting
                     break
+                # Measure how much time is left from the loop interval and sleep during the remaining time.
+                # Additionally set a lower limit of 0
+                freeTime = max(0, args.watch - (time.time() - loopTime))
+                time.sleep(freeTime)
         except KeyboardInterrupt:
             print("\nUser aborted watching by keyboard interrupt.")
         serOut.close()
@@ -579,12 +623,9 @@ if __name__ == "__main__":
         else:
             # loop time needs to be >0 nonetheless
             args.watch = 1
-        loopTime = time.time()
         try:
             # do-while loop; break condition is at the bottom of the loop.
             while True:
-                if time.time() - loopTime < args.watch:
-                    continue
                 loopTime = time.time()
                 for i,e in enumerate(cmds):
                     # (for watch mode) process non-read commands only once.
@@ -594,12 +635,12 @@ if __name__ == "__main__":
                     log_index = i + 1
                     if args.log_no_index:
                         log_index = 0
-                    if not reading[i]:
+                    if not e["reading"]:
                         # this does not affect e which will be used in this iteration.
                         cmds[i] = None
                     if not args.log_no_out:
-                        sysex2fileOrConsole(e, "HEX", None, "Out", args.log_index)
-                    midiOut.send_message(e)
+                        sysex2fileOrConsole(e["bin"], "HEX", None, "Out", log_index)
+                    midiOut.send_message(e["bin"])
                     txCounter += 1
                     # Let Syntherrupter process the data
                     time.sleep(0.04)
@@ -611,11 +652,18 @@ if __name__ == "__main__":
                             msg = midiIn.get_message()
                             if not msg:
                                 continue
-                            sysex2fileOrConsole(msg[0], args.receive, args.output, "In", log_index)
+                            expectFloat = e["number"] & 0x2000
+                            if e["reading"]:
+                                expectFloat = e["value"] & 0x2000
+                            sysex2fileOrConsole(msg[0], args.receive, args.output, "In", log_index, e["reading"], expectFloat)
                             start = time.time()
                 if not looping:
-                    # abort after 1 iteration
+                    # abort after 1 iteration without waiting.
                     break
+                # Measure how much time is left from the loop interval and sleep during the remaining time.
+                # Additionally set a lower limit of 0
+                freeTime = max(0, args.watch - (time.time() - loopTime))
+                time.sleep(freeTime)
         except KeyboardInterrupt:
             print("\nUser aborted watching by keyboard interrupt.")
         del midiOut
@@ -629,9 +677,9 @@ if __name__ == "__main__":
             if args.log_no_index:
                 log_index = 0
             if not args.log_no_out:
-                sysex2fileOrConsole(e, "HEX", None, "Out", log_index)
+                sysex2fileOrConsole(e["bin"], "HEX", None, "Out", log_index)
             if (out):
-                sysex2fileOrConsole(e, "HEX", out, "Out", log_index)
+                sysex2fileOrConsole(e["bin"], "HEX", out, "Out", log_index)
         if out:
             print("Wrote {} command(s) as hex to file.".format(len(cmds)))
 
@@ -642,8 +690,8 @@ if __name__ == "__main__":
             if args.log_no_index:
                 log_index = 0
             if not args.log_no_out:
-                sysex2fileOrConsole(e, "HEX", None, "Out", log_index)
+                sysex2fileOrConsole(e["bin"], "HEX", None, "Out", log_index)
             if (out):
-                sysex2fileOrConsole(e, "BIN", out, "Out", log_index)
+                sysex2fileOrConsole(e["bin"], "BIN", out, "Out", log_index)
         if out:
             print("Wrote {} command(s) as binary to file.".format(len(cmds)))

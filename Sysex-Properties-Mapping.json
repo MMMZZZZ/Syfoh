@@ -2,119 +2,119 @@
     "0x020": {
         "targetMSB-name": "mode",
         "targetLSB-name": "",
-        "targetMSB": {"simple": 1, "ml": 2, "midi-live": 2, "lightsaber": 3, "ls": 3},
+        "targetMSB": {"simple": 1, "midi-live": 2, "ml": 2, "lightsaber": 3, "ls": 3},
         "targetLSB": {},
-        "value": {"true":  1, "false":  0, "enabled":  1, "disabled":  0},
+        "value": {"enabled": 1, "disabled": 0, "true": 1, "false": 0},
         "type": "int"
     },
     "0x021": {
         "targetMSB-name": "mode",
         "targetLSB-name": "coil",
-        "targetMSB": {"simple": 1, "ml": 2, "midi-live": 2, "lightsaber": 3, "ls": 3},
+        "targetMSB": {"simple": 1, "midi-live": 2, "ml": 2, "lightsaber": 3, "ls": 3},
         "targetLSB": {},
         "value": {},
-        "type": "int"
+        "type": "float"
     },
     "0x022": {
         "targetMSB-name": "mode",
         "targetLSB-name": "coil",
-        "targetMSB": {"simple": 1, "ml": 2, "midi-live": 2, "lightsaber": 3, "ls": 3},
+        "targetMSB": {"simple": 1, "midi-live": 2, "ml": 2, "lightsaber": 3, "ls": 3},
         "targetLSB": {},
         "value": {},
-        "type": "int"
+        "type": "float"
     },
     "0x023": {
         "targetMSB-name": "mode",
         "targetLSB-name": "coil",
-        "targetMSB": {"simple": 1, "ml": 2, "midi-live": 2, "lightsaber": 3, "ls": 3},
+        "targetMSB": {"simple": 1, "midi-live": 2, "ml": 2, "lightsaber": 3, "ls": 3},
         "targetLSB": {},
         "value": {},
-        "type": "int"
+        "type": "float"
     },
     "0x024": {
         "targetMSB-name": "mode",
         "targetLSB-name": "coil",
-        "targetMSB": {"simple": 1, "ml": 2, "midi-live": 2, "lightsaber": 3, "ls": 3},
+        "targetMSB": {"simple": 1, "midi-live": 2, "ml": 2, "lightsaber": 3, "ls": 3},
         "targetLSB": {},
         "value": {},
-        "type": "int"
+        "type": "float"
     },
     "0x040": {
         "targetMSB-name": "mode",
         "targetLSB-name": "coil",
-        "targetMSB": {"simple": 1, "ml": 2, "midi-live": 2, "lightsaber": 3, "ls": 3},
+        "targetMSB": {"simple": 1, "midi-live": 2, "ml": 2, "lightsaber": 3, "ls": 3},
         "targetLSB": {},
         "value": {},
-        "type": "int"
+        "type": "float"
     },
     "0x041": {
         "targetMSB-name": "mode",
         "targetLSB-name": "coil",
-        "targetMSB": {"simple": 1, "ml": 2, "midi-live": 2, "lightsaber": 3, "ls": 3},
+        "targetMSB": {"simple": 1, "midi-live": 2, "ml": 2, "lightsaber": 3, "ls": 3},
         "targetLSB": {},
         "value": {},
-        "type": "int"
+        "type": "float"
     },
     "0x042": {
         "targetMSB-name": "mode",
         "targetLSB-name": "coil",
-        "targetMSB": {"simple": 1, "ml": 2, "midi-live": 2, "lightsaber": 3, "ls": 3},
+        "targetMSB": {"simple": 1, "midi-live": 2, "ml": 2, "lightsaber": 3, "ls": 3},
         "targetLSB": {},
         "value": {},
-        "type": "int"
+        "type": "float"
     },
     "0x043": {
         "targetMSB-name": "mode",
         "targetLSB-name": "coil",
-        "targetMSB": {"simple": 1, "ml": 2, "midi-live": 2, "lightsaber": 3, "ls": 3},
+        "targetMSB": {"simple": 1, "midi-live": 2, "ml": 2, "lightsaber": 3, "ls": 3},
         "targetLSB": {},
         "value": {},
-        "type": "int"
+        "type": "float"
     },
     "0x060": {
         "targetMSB-name": "mode",
         "targetLSB-name": "coil",
-        "targetMSB": {"simple": 1, "ml": 2, "midi-live": 2, "lightsaber": 3, "ls": 3},
+        "targetMSB": {"simple": 1, "midi-live": 2, "ml": 2, "lightsaber": 3, "ls": 3},
         "targetLSB": {},
-        "value": {},
+        "value": {"all":  65535},
         "type": "int"
     },
     "0x061": {
         "targetMSB-name": "mode",
         "targetLSB-name": "coil",
-        "targetMSB": {"simple": 1, "ml": 2, "midi-live": 2, "lightsaber": 3, "ls": 3},
+        "targetMSB": {"simple": 1, "midi-live": 2, "ml": 2, "lightsaber": 3, "ls": 3},
         "targetLSB": {},
-        "value": {},
+        "value": {"all": 63},
         "type": "int"
     },
     "0x062": {
         "targetMSB-name": "mode",
         "targetLSB-name": "coil",
-        "targetMSB": {"simple": 1, "ml": 2, "midi-live": 2, "lightsaber": 3, "ls": 3},
+        "targetMSB": {"simple": 1, "midi-live": 2, "ml": 2, "lightsaber": 3, "ls": 3},
         "targetLSB": {},
         "value": {"constant": 0, "const": 0, "linear": 1, "lin": 1},
-		"type": "int"
+		"type": "float"
     },
     "0x063": {
         "targetMSB-name": "mode",
         "targetLSB-name": "coil",
-        "targetMSB": {"simple": 1, "ml": 2, "midi-live": 2, "lightsaber": 3, "ls": 3},
+        "targetMSB": {"simple": 1, "midi-live": 2, "ml": 2, "lightsaber": 3, "ls": 3},
         "targetLSB": {},
         "value": {},
-        "type": "int"
+        "type": "float"
     },
     "0x064": {
         "targetMSB-name": "mode",
         "targetLSB-name": "coil",
-        "targetMSB": {"simple": 1, "ml": 2, "midi-live": 2, "lightsaber": 3, "ls": 3},
+        "targetMSB": {"simple": 1, "midi-live": 2, "ml": 2, "lightsaber": 3, "ls": 3},
         "targetLSB": {},
         "value": {},
-        "type": "int"
+        "type": "float"
     },
     "0x066": {
         "targetMSB-name": "mode",
         "targetLSB-name": "coil",
-        "targetMSB": {"simple": 1, "ml": 2, "midi-live": 2, "lightsaber": 3, "ls": 3},
+        "targetMSB": {"simple": 1, "midi-live": 2, "ml": 2, "lightsaber": 3, "ls": 3},
         "targetLSB": {},
         "value": {"all":  65535},
         "type": "int"
@@ -122,31 +122,31 @@
     "0x067": {
         "targetMSB-name": "mode",
         "targetLSB-name": "",
-        "targetMSB": {"simple": 1, "ml": 2, "midi-live": 2, "lightsaber": 3, "ls": 3},
+        "targetMSB": {"simple": 1, "midi-live": 2, "ml": 2, "lightsaber": 3, "ls": 3},
         "targetLSB": {},
         "value": {},
-        "type": "int"
+        "type": "float"
     },
     "0x068": {
         "targetMSB-name": "mode",
         "targetLSB-name": "",
-        "targetMSB": {"simple": 1, "ml": 2, "midi-live": 2, "lightsaber": 3, "ls": 3},
+        "targetMSB": {"simple": 1, "midi-live": 2, "ml": 2, "lightsaber": 3, "ls": 3},
         "targetLSB": {},
         "value": {},
-        "type": "int"
+        "type": "float"
     },
     "0x069": {
         "targetMSB-name": "mode",
         "targetLSB-name": "",
-        "targetMSB": {"simple": 1, "ml": 2, "midi-live": 2, "lightsaber": 3, "ls": 3},
+        "targetMSB": {"simple": 1, "midi-live": 2, "ml": 2, "lightsaber": 3, "ls": 3},
         "targetLSB": {},
         "value": {},
-        "type": "int"
+        "type": "float"
     },
     "0x100": {
         "targetMSB-name": "mode",
         "targetLSB-name": "coil",
-        "targetMSB": {"simple": 1, "ml": 2, "midi-live": 2, "lightsaber": 3, "ls": 3},
+        "targetMSB": {"simple": 1, "midi-live": 2, "ml": 2, "lightsaber": 3, "ls": 3},
         "targetLSB": {},
         "value": {},
         "type": "int"
@@ -154,7 +154,7 @@
     "0x101": {
         "targetMSB-name": "mode",
         "targetLSB-name": "coil",
-        "targetMSB": {"simple": 1, "ml": 2, "midi-live": 2, "lightsaber": 3, "ls": 3},
+        "targetMSB": {"simple": 1, "midi-live": 2, "ml": 2, "lightsaber": 3, "ls": 3},
         "targetLSB": {},
         "value": {},
         "type": "int"
@@ -181,7 +181,7 @@
         "targetMSB": {},
         "targetLSB": {},
         "value": {"key": 41153700, "reset-key": 41153700},
-        "type": "int"
+        "type": "float"
     },
     "0x203": {
         "targetMSB-name": "",
@@ -189,7 +189,7 @@
         "targetMSB": {},
         "targetLSB": {},
         "value": {},
-        "type": "int"
+        "type": "float"
     },
     "0x220": {
         "targetMSB-name": "",
@@ -197,7 +197,7 @@
         "targetMSB": {},
         "targetLSB": {},
         "value": {},
-        "type": "int"
+        "type": "float"
     },
     "0x221": {
         "targetMSB-name": "",
@@ -205,7 +205,7 @@
         "targetMSB": {},
         "targetLSB": {},
         "value": {},
-        "type": "int"
+        "type": "float"
     },
     "0x222": {
         "targetMSB-name": "",
@@ -213,7 +213,7 @@
         "targetMSB": {},
         "targetLSB": {},
         "value": {},
-        "type": "int"
+        "type": "float"
     },
     "0x223": {
         "targetMSB-name": "",
@@ -221,7 +221,7 @@
         "targetMSB": {},
         "targetLSB": {},
         "value": {},
-        "type": "int"
+        "type": "float"
     },
     "0x224": {
         "targetMSB-name": "",
@@ -269,7 +269,7 @@
         "targetMSB": {},
         "targetLSB": {},
         "value": {},
-        "type": "int"
+        "type": "float"
     },
     "0x243": {
         "targetMSB-name": "",
@@ -277,7 +277,7 @@
         "targetMSB": {},
         "targetLSB": {},
         "value": {},
-        "type": "int"
+        "type": "float"
     },
     "0x244": {
         "targetMSB-name": "",
@@ -285,7 +285,7 @@
         "targetMSB": {},
         "targetLSB": {},
         "value": {},
-        "type": "int"
+        "type": "float"
     },
     "0x260": {
         "targetMSB-name": "",
@@ -293,7 +293,7 @@
         "targetMSB": {},
         "targetLSB": {},
         "value": {},
-        "type": "int"
+        "type": "float"
     },
     "0x261": {
         "targetMSB-name": "",
@@ -301,7 +301,7 @@
         "targetMSB": {},
         "targetLSB": {},
         "value": {},
-        "type": "int"
+        "type": "float"
     },
     "0x262": {
         "targetMSB-name": "",
@@ -309,7 +309,7 @@
         "targetMSB": {},
         "targetLSB": {},
         "value": {},
-        "type": "int"
+        "type": "float"
     },
     "0x263": {
         "targetMSB-name": "",
@@ -317,7 +317,7 @@
         "targetMSB": {},
         "targetLSB": {},
         "value": {},
-        "type": "int"
+        "type": "float"
     },
     "0x264": {
         "targetMSB-name": "",
@@ -333,7 +333,7 @@
         "targetMSB": {},
         "targetLSB": {},
         "value": {},
-        "type": "int"
+        "type": "float"
     },
     "0x267": {
         "targetMSB-name": "",
@@ -349,7 +349,7 @@
         "targetMSB": {},
         "targetLSB": {},
         "value": {},
-        "type": "int"
+        "type": "float"
     },
     "0x300": {
         "targetMSB-name": "program",
@@ -365,7 +365,7 @@
         "targetMSB": {},
         "targetLSB": {},
         "value": {},
-        "type": "int"
+        "type": "float"
     },
     "0x302": {
         "targetMSB-name": "program",
@@ -373,7 +373,7 @@
         "targetMSB": {},
         "targetLSB": {},
         "value": {},
-        "type": "int"
+        "type": "float"
     },
     "0x303": {
         "targetMSB-name": "program",
@@ -381,6 +381,6 @@
         "targetMSB": {},
         "targetLSB": {},
         "value": {},
-        "type": "int"
+        "type": "float"
     }
 }
