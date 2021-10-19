@@ -191,6 +191,14 @@
         "value": {},
         "type": "float"
     },
+    "0x204": {
+        "targetMSB-name": "",
+        "targetLSB-name": "mcu",
+        "targetMSB": {},
+        "targetLSB": {"tiva":  0, "nextion": 1, "screen": 1, "nxt": 1, "display": 1},
+        "value": {},
+        "type": "int"
+    },
     "0x220": {
         "targetMSB-name": "",
         "targetLSB-name": "",
