@@ -73,7 +73,7 @@ Process a single command and let Syfoh sent it directly to serial port 2 (with t
 ```
 python Syfoh.py -i "set some-command to some-value" -m SER -p COM2
 ```
-Sending data to a MIDI port works exactly the same but with `-m MID`. Note that you can get a list of ports using the `-l` parameter. On top of that you can use the index of the resulting list instead of the port name. Again, please check out the `-h/--help` for details. 
+Sending data to a MIDI port works exactly the same but with `-m MID`. Note that you can get a list of ports using the `-l` parameter. On top of that you can use the index of the resulting list instead of the port name ([example below](#basics-chosing-ports-writing-read-commands)). Again, please check out the `-h/--help` for details. 
 
 ### General Examples and Explanations
 
@@ -83,42 +83,42 @@ Sending data to a MIDI port works exactly the same but with `-m MID`. Note that 
 * For every command, there may be optional or required targets, like the coil that shall be modified. In case the names for those targets are not obvious from the [sysex command documentation](https://github.com/MMMZZZZ/Syntherrupter/blob/dev/Documentation/Wiki/Custom%20MIDI%20Commands.md#system-exclusive-messages-sysex), the full list of names for every command is contained in the [Sysex-Properties-Mapping.json](/Sysex-Properties-Mapping.json) file.
 * Similarly, the target values and the sysex value can be replaced by keywords, like `enabled`/`disabled` instead of `1`/`0`, or `simple`/`midi-live`/... for the `mode` target. Again, all those keywords should be obvious from the documentation of the commands and if not, are contained in the json file linked above.
 * Unless noted otherwise, all values are zero indexed. This means f.ex. that coil numbers run from 0 to 5 (unlike in the Syntherrupter UI) and MIDI Channels run from 0-15. Check the documentation linked above for details about the supported value ranges of every command.
-
-```
-Command:       Set enable for mode simple to enabled
-Equal variant: set Mode-Enable for MODE 1 to 0x01
-Equal variant: set 0x20 for MODE simple to 0b1
-```
+    
+    ```
+    Command:       Set enable for mode simple to enabled
+    Equal variant: set Mode-Enable for MODE 1 to 0x01
+    Equal variant: set 0x20 for MODE simple to 0b1
+    ```
 
 * In addition to the command-specific targets, a target device can be specified using `device [deviceID]`. If no device is given, the command is sent as broadcast to all devices. In a nutshell, this is necessary if more than one Syntherrupter is connected to the same MIDI bus. More details can be found in the [sysex command documentation](https://github.com/MMMZZZZ/Syntherrupter/blob/dev/Documentation/Wiki/Custom%20MIDI%20Commands.md#system-exclusive-messages-sysex). 
 * Multiple targets are separated by `and`. The order is not important.
 * Almost all parameters can be written with floats - except for things like enable/disable commands where floats don't make sense. Therefore you don't need to convert anything to percent or permille. Details and conventions for float values can be found in the [sysex command documentation](https://github.com/MMMZZZZ/Syntherrupter/blob/dev/Documentation/Wiki/Custom%20MIDI%20Commands.md#conventions).
-
-For MIDI program/envelope `0x20` on device `0`, set the amplitude of step 1 to 1.75. 
-```
-Command:       set envelope-amplitude for device 0 and program 0x20 and step 1 to 1750
-Equal variant: set envelope-amplitude for device 0 and program 0x20 and step 1 to 1.75
-```
-
+    
+    For MIDI program/envelope `0x20` on device `0`, set the amplitude of step 1 to 1.75. 
+    ```
+    Command:       set envelope-amplitude for device 0 and program 0x20 and step 1 to 1750
+    Equal variant: set envelope-amplitude for device 0 and program 0x20 and step 1 to 1.75
+    ```
+    
 * Broadcasting/wildcards not only work for the device but for all targets, too. You can broadcast by explicitly writing the broadcast value `127` or `0x7f` or by using the keyword `all`. Not all commands support broadcasting because it doesn't always make sense. 
-
-```
-Command:       set ontime for mode simple and coil all to 42
-Equal variant: set ontime for mode simple and coil 127 to 42
-```
-
+    
+    ```
+    Command:       set ontime for mode simple and coil all to 42
+    Equal variant: set ontime for mode simple and coil 127 to 42
+    ```
+    
 * For string commands, the first 4 characters behind the `to ` (including the first space behind `to`!) are taken as string. This part obviously is case sensitive and can contain additional spaces.
 * Remember, because of the limited sysex size, every sysex command can only carry up to 4 characters. Strings longer than 4 characters are split into "char-groups".
 * char-group 0 will cause the target device to delete the entire string (overwrite with `\x00`). Hence no additional `\x00` character is needed at the end.
-
-Set the name of user 0 (admin) to `Hello, World!`:
-```
-set user-name for user 0 and char-group 0 to Hell
-set user-name for user 0 and char-group 1 to o, W
-set user-name for user 0 and char-group 2 to orld
-set user-name for user 0 and char-group 3 to !
-```
-
+    
+    Set the name of user 0 (admin) to `Hello, World!`:
+    ```
+    set user-name for user 0 and char-group 0 to Hell
+    set user-name for user 0 and char-group 1 to o, W
+    set user-name for user 0 and char-group 2 to orld
+    set user-name for user 0 and char-group 3 to !
+    ```
+    
 ### Batch Processing Text Files
 
 Syfoh can not only accept a single command from the command line but also a text file with any amount of commands, one per line. Here's and example of how such a file could look (Included in this repository as [Example-Input.txt](/Example-Input.txt)). It enables stereo for all 6 coils, sets reach mode to constant and distributes them equally across the stereo range. The example also demonstrates how easy such setups are with the float commands; no need to mess with fractions of 127 or other weird values. 
